@@ -33,7 +33,7 @@ function diff_tags() {
     cbs list-tagged --latest cloud7-openstack-$1-release | sort | awk '{ print $1 }' > release
     cbs list-tagged --latest cloud7-openstack-$1-testing | sort | awk '{ print $1 }' > testing
 
-    diff --unified=0 --minimal release testing
+    diff --unified=0 --minimal release testing | grep -v ^@
 }
 
 
