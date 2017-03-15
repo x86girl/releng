@@ -1,0 +1,15 @@
+pygerrit >= 1.0.0
+sh >= 1.12.9
+sqlalchemy
+pbr
+rdopkg
+requests
+urllib3
+validators
+PyYAML
+
+# Other binary requirements
+# git
+# git-review
+# python-rpm
+# rpmdevtools
