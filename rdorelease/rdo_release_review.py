@@ -32,6 +32,9 @@ def parse_args():
     parser.add_argument('-u', '--user', dest='user',
                         default=os.environ['USER'],
                         help='Base directory for aplication')
+    parser.add_argument('--dry-run', dest='dry_run',
+                        action='store_true', default=False,
+                        help='Run in dry-run mode, do not send the review')
     return parser.parse_args()
 
 
@@ -159,7 +162,7 @@ def tarball_exists(package):
         return False
 
 
-def process_package(package):
+def process_package(package, dry_run):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (package.name, package.version, package.osp_release), logfile)
     try:
@@ -189,8 +192,12 @@ def process_package(package):
         log_message('INFO', "Sending review for package %s version %s" %
                     (package.name, package.version), logfile)
         new_version(package.name, package.version, package.osp_release,
-                    dry_run=False)
-        db.update_status(session, package, 'CREATED')
+                    dry_run=dry_run)
+        if dry_run:
+            log_message('INFO', "Running in dry-run mode. Review is not sent",
+                        logfile)
+        else:
+            db.update_status(session, package, 'CREATED')
     except NotBranchedPackage as e:
         log_message('ERROR', "Package %s %s for %s failed to build: %s" %
                     (package.name, package.version, package.osp_release,
@@ -211,7 +218,7 @@ def process_packages(args):
                                  status='RETRY')
     pending_pkgs = new_pkgs + failed_pkgs + retry_pkgs
     for package in pending_pkgs:
-        process_package(package)
+        process_package(package, args.dry_run)
 
 
 def process_reviews(args):
