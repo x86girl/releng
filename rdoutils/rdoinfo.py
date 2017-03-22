@@ -39,7 +39,7 @@ def get_pin(package, release):
     inforepo.init(force_fetch=True)
     pkgs = [p for p in inforepo.get_info()['packages'] if p['name'] == package]
     if not pkgs or len(pkgs) != 1:
-        raise KeyError("Package %s not found in rdoinfo" % package)
+        raise NotInRdoinfo("Package %s not found in rdoinfo" % package)
     pkg = pkgs[0]
     if release in pkg['tags'].keys():
         pkg_rel_tag = pkg['tags'][release]
@@ -48,5 +48,13 @@ def get_pin(package, release):
         else:
             return None
     else:
-        raise KeyError("Package %s not found for release %s" %
-                       (package, release))
+        raise NotInRdoinfoRelease("Package %s not found for release %s" %
+                                  (package, release))
+
+
+class NotInRdoinfo(Exception):
+    pass
+
+
+class NotInRdoinfoRelease(Exception):
+    pass

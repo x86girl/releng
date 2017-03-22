@@ -11,6 +11,7 @@ from rdopkg.utils.cmd import git
 from rdoutils import review_utils
 from rdoutils import releases_utils
 from rdoutils import rdoinfo as rdoinfo_utils
+from rdoutils.rdoinfo import NotInRdoinfoRelease
 from sh import rdopkg
 from sh import spectool
 
@@ -182,7 +183,7 @@ def process_package(package, dry_run):
         if not is_newer(new_evr, old_evr):
             log_message('INFO', "Version %s is not newer that existing %s" %
                         (new_evr, old_evr), logfile)
-            db.update_status(session, package, 'NOT_REQUIRED')
+            db.update_status(session, package, 'NOTREQUIRED')
             return
         if not tarball_exists(package.name):
             log_message('INFO', "Tarball for %s %s is not ready yet" %
@@ -203,6 +204,10 @@ def process_package(package, dry_run):
                     (package.name, package.version, package.osp_release,
                      e.message), logfile)
         db.update_status(session, package, 'NOTBRANCHED')
+    except NotInRdoinfoRelease as e:
+        log_message('INFO', "Package %s is not in release %s" % (package.name,
+                    package.osp_release), logfile)
+        db.update_status(session, package, 'NOTREQUIRED')
     except Exception as e:
         log_message('ERROR', "Package %s %s for %s failed to build: %s" %
                     (package.name, package.version, package.osp_release,
