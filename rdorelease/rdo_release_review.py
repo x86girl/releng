@@ -133,13 +133,9 @@ def new_version(package, version, release, dry_run=True):
     stable_branch = "%s-rdo" % release
     git('reset', '--hard', 'origin/%s' % stable_branch)
     git('checkout', stable_branch)
-    cmd = ['new-version', '-b', '-U', version]
-    if dry_run:
-        cmd.append('-t')
-        new_vers = rdopkg(*cmd)
-    else:
-        cmd.extend(['-p', 'review-patches/%s-rdo-patches' % release])
-        new_vers = rdopkg(*cmd)
+    cmd = ['new-version', '-b', '-U', version, '-t']
+    new_vers = rdopkg(*cmd)
+    if not dry_run:
         git('review', '-t', '%s-update' % release)
     return new_vers
 
