@@ -64,8 +64,8 @@ def get_reviews(session, review=None, status=None, without_status=None,
 
 
 def get_packages(session, review=None, status=None, without_status=None,
-                 osp_release=None, name=None, order="asc", since=None,
-                 before=None):
+                 osp_release=None, name=None, version=None, order="asc",
+                 since=None, before=None):
     packages = session.query(Package)
     if review is not None:
         packages = packages.filter(Package.review_number == review)
@@ -75,6 +75,10 @@ def get_packages(session, review=None, status=None, without_status=None,
         packages = packages.filter(Package.status != without_status)
     if osp_release is not None:
         packages = packages.filter(Package.osp_release == osp_release)
+    if name is not None:
+        packages = packages.filter(Package.name == name)
+    if version is not None:
+        packages = packages.filter(Package.version == version)
     if since is not None:
         packages = packages.filter(Package.release_date > since)
     if before is not None:

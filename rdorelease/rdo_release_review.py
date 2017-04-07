@@ -39,6 +39,10 @@ def parse_args():
     parser.add_argument('-n', '--review-number', dest='number',
                         default=None,
                         help='Review number to process')
+    parser.add_argument('-p', '--rdoinfo-pins', dest='rdoinfo_pins',
+                        default=None,
+                        help='Path to rdoinfo when creating new releases from'
+                        'rdoinfo pin updates instead of releases reviews')
     return parser.parse_args()
 
 
@@ -253,10 +257,31 @@ def process_reviews(args):
                         logfile)
 
 
+def process_rdoinfo(args):
+    new_pins = rdoinfo_utils.get_new_pinned_builds(args.rdoinfo_pins,
+                                                   args.release)
+    for pin in new_pins:
+        prev_package = db.get_packages(session,
+                                       name=pin['name'],
+                                       version=pin['version'],
+                                       osp_release=pin['release'])
+        if not prev_package:
+            log_message('INFO', "rdoinfo Found new package %s %s" % (
+                         pin['name'], pin['version']), logfile)
+
+            pkg = Package(name=pin['name'],
+                          version=pin['version'],
+                          osp_release=pin['release'])
+            db.add_package(session, pkg)
+
+
 def main():
     args = parse_args()
     env_prep(args.directory, args.user)
-    process_reviews(args)
+    if args.rdoinfo_pins:
+        process_rdoinfo(args)
+    else:
+        process_reviews(args)
     process_packages(args)
 
 
