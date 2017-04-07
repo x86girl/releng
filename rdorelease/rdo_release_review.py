@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import db
 import os
 import re
 import rpm
@@ -14,9 +13,7 @@ from rdoutils import rdoinfo as rdoinfo_utils
 from rdoutils.rdoinfo import NotInRdoinfoRelease
 from sh import rdopkg
 
-from db import Package
 from utils import log_message
-from utils import review_time_fmt
 
 
 def parse_args():
@@ -45,11 +42,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def create_session(directory):
-    db_path = "%s/reviews.sqlite" % datadir
-    return db.get_session("sqlite:///%s" % db_path)
-
-
 def create_dirs(directory):
     log_message('INFO', "Running rdo_auto_release in %s directory" % directory,
                 logfile, stdout_only=True)
@@ -71,13 +63,11 @@ def env_prep(directory, gerrit_user):
     repodir = datadir + '/distgits'
     create_dirs(directory)
     global session
-    session = create_session(directory)
     global user
     user = gerrit_user
 
 
 def new_pkgs_review(review, inforepo):
-    rel_date = review_time_fmt(review['submitted'])
     review_number = review['_number']
     log_message('INFO', "Processing releases for review %s" % review_number,
                 logfile)
@@ -97,12 +87,9 @@ def new_pkgs_review(review, inforepo):
                 log_message('INFO', "%s Found new package %s %s" % (
                             review_number, pkg['name'], release['version']),
                             logfile)
-                pkg = Package(
-                    name=pkg['name'],
-                    version=release['version'],
-                    release_date=rel_date,
-                    review_number=review_number,
-                    osp_release=release['release'])
+                pkg = {'name': pkg['name'],
+                       'version': release['version'],
+                       'osp_release': release['release']}
                 new_pkgs.append(pkg)
     return new_pkgs
 
@@ -156,62 +143,42 @@ def is_newer(new_evr, old_evr):
     return comp == 1
 
 
-def process_package(package, dry_run):
+def process_package(name, version, osp_release, dry_run):
     log_message('INFO', "Processing package %s version %s for release %s" %
-                (package.name, package.version, package.osp_release), logfile)
+                (name, version, osp_release), logfile)
     try:
-        rdoinfo_pin = rdoinfo_utils.get_pin(package.name, package.osp_release)
-        if rdoinfo_pin and rdoinfo_pin != package.version:
+        rdoinfo_pin = rdoinfo_utils.get_pin(name, osp_release)
+        if rdoinfo_pin and rdoinfo_pin != version:
             log_message('INFO', "Package %s pinned to version %s in rdoinfo" %
-                        (package.name, rdoinfo_pin), logfile)
+                        (name, rdoinfo_pin), logfile)
             return
-        clone_distgit(package.name, package.osp_release)
-        old_evr = get_evr(package.name)
-        new_vers = new_version(package.name, package.version,
-                               package.osp_release, dry_run=True)
+        clone_distgit(name, osp_release)
+        old_evr = get_evr(name)
+        new_vers = new_version(name, version, osp_release, dry_run=True)
         if new_vers_stderr(new_vers.stderr):
             log_message('INFO', new_vers_stderr(new_vers.stderr).group(1),
                         logfile)
-        new_evr = get_evr(package.name)
+        new_evr = get_evr(name)
         if not is_newer(new_evr, old_evr):
             log_message('INFO', "Version %s is not newer that existing %s" %
                         (new_evr, old_evr), logfile)
-            db.update_status(session, package, 'NOTREQUIRED')
             return
         log_message('INFO', "Sending review for package %s version %s" %
-                    (package.name, package.version), logfile)
-        new_version(package.name, package.version, package.osp_release,
-                    dry_run=dry_run)
+                    (name, version), logfile)
+        new_version(name, version, osp_release, dry_run=dry_run)
         if dry_run:
             log_message('INFO', "Running in dry-run mode. Review is not sent",
                         logfile)
-        else:
-            db.update_status(session, package, 'CREATED')
     except NotBranchedPackage as e:
-        log_message('ERROR', "Package %s %s for %s failed to build: %s" %
-                    (package.name, package.version, package.osp_release,
-                     e.message), logfile)
-        db.update_status(session, package, 'NOTBRANCHED')
+        log_message('INFO', "Package %s %s for %s is not required: %s" %
+                    (name, version, osp_release, e.message), logfile)
     except NotInRdoinfoRelease as e:
-        log_message('INFO', "Package %s is not in release %s" % (package.name,
-                    package.osp_release), logfile)
-        db.update_status(session, package, 'NOTREQUIRED')
+        log_message('INFO', "Package %s is not in release %s" % (name,
+                    osp_release), logfile)
     except Exception as e:
         log_message('ERROR', "Package %s %s for %s failed to build: %s" %
-                    (package.name, package.version, package.osp_release,
-                     e.message), logfile)
-        db.update_status(session, package, 'FAILED')
-
-
-def process_packages(args):
-    new_pkgs = db.get_packages(session, osp_release=args.release, status='NEW')
-    failed_pkgs = db.get_packages(session, osp_release=args.release,
-                                  status='FAILED')
-    retry_pkgs = db.get_packages(session, osp_release=args.release,
-                                 status='RETRY')
-    pending_pkgs = new_pkgs + failed_pkgs + retry_pkgs
-    for package in pending_pkgs:
-        process_package(package, args.dry_run)
+                    (name, version, osp_release, e.message), logfile)
+        raise e
 
 
 def process_reviews(args):
@@ -229,35 +196,21 @@ def process_reviews(args):
     for review in reviews:
         rev_num = review['_number']
         log_message('INFO', "Processing review %s" % rev_num, logfile)
-        prev_review = db.get_reviews(session, review=rev_num)
-        if not prev_review:
-            new_pkgs = new_pkgs_review(review, inforepo)
-            for new_pkg in new_pkgs:
-                db.add_package(session, new_pkg)
-            db.add_review(session, review, args.release)
-            log_message('INFO', "Added review %s to database" % rev_num,
-                        logfile)
-        else:
-            log_message('INFO', "Review %s already in database" % rev_num,
-                        logfile)
+        new_pkgs = new_pkgs_review(review, inforepo)
+        for new_pkg in new_pkgs:
+            if new_pkg['osp_release'] == args.release:
+                process_package(new_pkg['name'], new_pkg['version'],
+                                new_pkg['osp_release'], args.dry_run)
 
 
 def process_rdoinfo(args):
     new_pins = rdoinfo_utils.get_new_pinned_builds(args.rdoinfo_pins,
                                                    args.release)
     for pin in new_pins:
-        prev_package = db.get_packages(session,
-                                       name=pin['name'],
-                                       version=pin['version'],
-                                       osp_release=pin['release'])
-        if not prev_package:
-            log_message('INFO', "rdoinfo Found new package %s %s" % (
-                         pin['name'], pin['version']), logfile)
-
-            pkg = Package(name=pin['name'],
-                          version=pin['version'],
-                          osp_release=pin['release'])
-            db.add_package(session, pkg)
+        log_message('INFO', "rdoinfo Found new package %s %s" % (
+                    pin['name'], pin['version']), logfile)
+        process_package(pin['name'], pin['version'], pin['release'],
+                        args.dry_run)
 
 
 def main():
@@ -267,7 +220,6 @@ def main():
         process_rdoinfo(args)
     else:
         process_reviews(args)
-    process_packages(args)
 
 
 class NotBranchedPackage(Exception):
