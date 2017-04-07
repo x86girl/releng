@@ -36,6 +36,9 @@ def parse_args():
     parser.add_argument('--dry-run', dest='dry_run',
                         action='store_true', default=False,
                         help='Run in dry-run mode, do not send the review')
+    parser.add_argument('-n', '--review-number', dest='number',
+                        default=None,
+                        help='Review number to process')
     return parser.parse_args()
 
 
@@ -225,9 +228,14 @@ def process_packages(args):
 def process_reviews(args):
     inforepo = rdoinfo.get_default_inforepo()
     inforepo.init(force_fetch=True)
-    after = datetime.datetime.now() - datetime.timedelta(days=args.days)
-    after_fmt = after.strftime('%Y-%m-%d')
-    reviews = review_utils.get_osp_releases_reviews(args.release, after_fmt,
+    if args.number:
+        after_fmt = None
+    else:
+        after = datetime.datetime.now() - datetime.timedelta(days=args.days)
+        after_fmt = after.strftime('%Y-%m-%d')
+    reviews = review_utils.get_osp_releases_reviews(args.release,
+                                                    after=after_fmt,
+                                                    number=args.number,
                                                     status='merged')
     for review in reviews:
         rev_num = review['_number']

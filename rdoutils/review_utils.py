@@ -33,11 +33,20 @@ def get_gerrit_client(url, user=None, password=None):
         return GerritRestAPI(url=gerrit_url, verify=False)
 
 
-def get_osp_releases_reviews(release, after, status='merged'):
+def get_osp_releases_reviews(release,
+                             number=None,
+                             after=None,
+                             status='merged'):
     client = get_gerrit_client('osp')
-    rev_url = ("/changes/?q=status:%s+project:openstack/releases+file:"
-               "deliverables+file:%s+after:%s%s" %
-               (status, release, after, QUERY_PARMS))
+    rev_url = "/changes/?q="
+    if number:
+        rev_url = "%s%s+" % (rev_url, number)
+    if status:
+        rev_url = "%sstatus:%s+" % (rev_url, status)
+    if after:
+        rev_url = "%safter:%s+" % (rev_url, after)
+    rev_url = ("%sproject:openstack/releases+file:deliverables+file:%s%s" %
+               (rev_url, release, QUERY_PARMS))
     reviews = client.get(rev_url)
     return(reviews)
 
