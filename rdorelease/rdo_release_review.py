@@ -143,6 +143,12 @@ def is_newer(new_evr, old_evr):
     return comp == 1
 
 
+def is_release_tag(package, version):
+    os.chdir("%s/%s" % (repodir, package))
+    is_tag = git.ref_exists('refs/tags/%s' % version)
+    return is_tag
+
+
 def process_package(name, version, osp_release, dry_run):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (name, version, osp_release), logfile)
@@ -153,6 +159,10 @@ def process_package(name, version, osp_release, dry_run):
                         (name, rdoinfo_pin), logfile)
             return
         clone_distgit(name, osp_release)
+        if not is_release_tag(name, version):
+            log_message('INFO', "Package %s has not release tag %s" %
+                        (name, version), logfile)
+            return
         old_evr = get_evr(name)
         new_vers = new_version(name, version, osp_release, dry_run=True)
         if new_vers_stderr(new_vers.stderr):
