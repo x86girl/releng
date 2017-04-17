@@ -6,9 +6,8 @@ requests
 urllib3
 validators
 PyYAML
+git-review
 
 # Other binary requirements
 # git
-# git-review
 # python-rpm
-# rpmdevtools
