@@ -62,8 +62,10 @@ def get_new_pinned_builds(location, release):
     for package in packages:
         name = package[0]
         tags = package[1]
+        if release not in inforepo.get_package(name)['tags']:
+            break
         pkg_tags = inforepo.get_package(name)['tags'][release]
-        if release in tags and 'source-branch' in pkg_tags.keys():
+        if release in tags and pkg_tags and 'source-branch' in pkg_tags.keys():
             pinned_version = pkg_tags['source-branch']
             new_pins.append({'name': name,
                              'release': release,
