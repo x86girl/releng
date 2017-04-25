@@ -65,6 +65,11 @@ def env_prep(directory, gerrit_user):
     global session
     global user
     user = gerrit_user
+    # We need to force TERM variables to invoke rdopkg methods
+    # from library. In some cases as cron or jenkins it's not set
+    # in environment
+    os.environ["TERM"] = "linux"
+    os.environ["TERMINFO"] = '/etc/terminfo'
 
 
 def new_pkgs_review(review, inforepo):
