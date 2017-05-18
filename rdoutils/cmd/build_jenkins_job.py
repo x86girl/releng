@@ -17,6 +17,8 @@ def parse_args():
                         help='User password')
     parser.add_argument('-t', '--token', dest='token',
                         help='Job Token')
+    parser.add_argument('--token-file', dest='token_file',
+                        help='File to read job token')
     parser.add_argument('-u', '--url', dest='url', default='rdo',
                         type=str, help='URL of jenkins server')
     parser.add_argument('-e', '--parameter', dest='parameters',
@@ -29,6 +31,11 @@ def main():
     args = parse_args()
     server = jenkins_utils.get_jenkins_client(args.url, args.user,
                                               args.password)
+    if args.token_file:
+        f = open(args.token_file, 'r')
+        token = f.read().rstrip('\n')
+    else:
+        token = args.token
     try:
         params = {}
         for parm in args.parameters:
@@ -40,7 +47,7 @@ def main():
         job = jenkins_utils.start_job(server,
                                       args.job_name,
                                       parameters=params,
-                                      token=args.token)
+                                      token=token)
         print job
     except jenkins.NotFoundException:
         print("Job %s does not exist" % args.job_name)
