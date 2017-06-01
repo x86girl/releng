@@ -154,7 +154,7 @@ def is_release_tag(package, version):
     return is_tag
 
 
-def process_package(name, version, osp_release, dry_run):
+def process_package(name, version, osp_release, dry_run, check_tag=False):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (name, version, osp_release), logfile)
     try:
@@ -164,7 +164,7 @@ def process_package(name, version, osp_release, dry_run):
                         (name, rdoinfo_pin), logfile)
             return
         clone_distgit(name, osp_release)
-        if not is_release_tag(name, version):
+        if check_tag and not is_release_tag(name, version):
             log_message('INFO', "Package %s has not release tag %s" %
                         (name, version), logfile)
             return
@@ -225,7 +225,7 @@ def process_rdoinfo(args):
         log_message('INFO', "rdoinfo Found new package %s %s" % (
                     pin['name'], pin['version']), logfile)
         process_package(pin['name'], pin['version'], pin['release'],
-                        args.dry_run)
+                        args.dry_run, check_tag=True)
 
 
 def main():
