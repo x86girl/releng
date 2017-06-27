@@ -6,10 +6,6 @@ from rdoutils import rdoinfo
 
 def parse_args():
     parser = argparse.ArgumentParser(description='List projects in RDO')
-    parser.add_argument('-u', '--user', dest='user',
-                        help='User in review.rdoproject.org')
-    parser.add_argument('-k', '--password', dest='password',
-                        help='Gerrit API password in review.rdoproject.org')
     parser.add_argument('-b', '--branch', dest='branch', default=None,
                         help='List only projects having this branch')
     parser.add_argument('-n', '--not-branch', dest='notbranch', default=None,
@@ -21,8 +17,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    client = review_utils.get_gerrit_client('rdo', user=args.user,
-                                            password=args.password)
+    client = review_utils.get_gerrit_client('rdo')
     if args.release:
         dist_in_rel = rdoinfo.get_projects_distgit(tag=args.release)
     else:
