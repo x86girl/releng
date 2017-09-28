@@ -12,6 +12,9 @@ def parse_args():
                         help='List only projects not having this branch')
     parser.add_argument('-r', '--release', dest='release', default=None,
                         help='List projects for this release in rdoinfo')
+    parser.add_argument('-m', '--missing-in-tag', dest='missing', default=None,
+                        help='List missing projects from specified CBS tag'
+                             'for the release specified in -r')
     return parser.parse_args()
 
 
@@ -33,7 +36,12 @@ def main():
         projects = review_utils.get_rdo_projects(client, b=args.branch)
     projects_gerrit = projects.keys()
     if dist_in_rel:
-        filtered_rel = list(set(projects_gerrit) & set(dist_in_rel))
+        if args.missing:
+            cbs_tag = args.missing
+            projects_cbs = rdoinfo.get_projects_distgit(buildsys_tag=cbs_tag)
+            filtered_rel = list(set(dist_in_rel) - set(projects_cbs))
+        else:
+            filtered_rel = list(set(projects_gerrit) & set(dist_in_rel))
     else:
         filtered_rel = projects_gerrit
     for proj in filtered_rel:
