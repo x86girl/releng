@@ -39,6 +39,14 @@ def parse_args():
                         default=None,
                         help='Path to rdoinfo when creating new releases from'
                         'rdoinfo pin updates instead of releases reviews')
+    parser.add_argument('-e', '--changelog-email', dest='changelog_email',
+                        default=None,
+                        help='Email address to use in changelog entry for'
+                        'the new release')
+    parser.add_argument('-c', '--changelog-user', dest='changelog_user',
+                        default=None,
+                        help='User name to include in changelog entry for'
+                        'the new release')
     return parser.parse_args()
 
 
@@ -126,12 +134,17 @@ def clone_distgit(package, release):
                                  (package, stable_branch))
 
 
-def new_version(package, version, release, dry_run=True):
+def new_version(package, version, release, dry_run=True,
+                chglog_user=None, chglog_email=None):
     os.chdir("%s/%s" % (repodir, package))
     stable_branch = "%s-rdo" % release
     git('reset', '--hard', 'origin/%s' % stable_branch)
     git('checkout', stable_branch)
     cmd = ['new-version', '-b', '-U', version, '-t']
+    if chglog_user:
+        cmd = cmd + ['-u', chglog_user]
+    if chglog_email:
+        cmd = cmd + ['-e', chglog_email]
     new_vers = rdopkg(*cmd)
     if not dry_run:
         git('review', '-t', '%s-update' % release)
@@ -154,7 +167,8 @@ def is_release_tag(package, version):
     return is_tag
 
 
-def process_package(name, version, osp_release, dry_run, check_tag=False):
+def process_package(name, version, osp_release, dry_run, check_tag=False,
+                    chglog_user=None, chglog_email=None):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (name, version, osp_release), logfile)
     try:
@@ -169,7 +183,9 @@ def process_package(name, version, osp_release, dry_run, check_tag=False):
                         (name, version), logfile)
             return
         old_evr = get_evr(name)
-        new_vers = new_version(name, version, osp_release, dry_run=True)
+        new_vers = new_version(name, version, osp_release, dry_run=True,
+                               chglog_user=chglog_user,
+                               chglog_email=chglog_email)
         if new_vers_stderr(new_vers.stderr):
             log_message('INFO', new_vers_stderr(new_vers.stderr).group(1),
                         logfile)
@@ -180,7 +196,8 @@ def process_package(name, version, osp_release, dry_run, check_tag=False):
             return
         log_message('INFO', "Sending review for package %s version %s" %
                     (name, version), logfile)
-        new_version(name, version, osp_release, dry_run=dry_run)
+        new_version(name, version, osp_release, dry_run=dry_run,
+                    chglog_user=chglog_user, chglog_email=chglog_email)
         if dry_run:
             log_message('INFO', "Running in dry-run mode. Review is not sent",
                         logfile)
@@ -215,7 +232,9 @@ def process_reviews(args):
         for new_pkg in new_pkgs:
             if new_pkg['osp_release'] == args.release:
                 process_package(new_pkg['name'], new_pkg['version'],
-                                new_pkg['osp_release'], args.dry_run)
+                                new_pkg['osp_release'], args.dry_run,
+                                chglog_user=args.changelog_user,
+                                chglog_email=args.changelog_email)
 
 
 def process_rdoinfo(args):
@@ -225,7 +244,9 @@ def process_rdoinfo(args):
         log_message('INFO', "rdoinfo Found new package %s %s" % (
                     pin['name'], pin['version']), logfile)
         process_package(pin['name'], pin['version'], pin['release'],
-                        args.dry_run, check_tag=True)
+                        args.dry_run, check_tag=True,
+                        chglog_user=args.changelog_user,
+                        chglog_email=args.changelog_email)
 
 
 def main():
