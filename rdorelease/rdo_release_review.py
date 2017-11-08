@@ -4,6 +4,7 @@ import os
 import re
 import rpm
 import shutil
+import time
 
 from rdopkg.actionmods import rdoinfo
 from rdopkg.utils.cmd import git
@@ -12,6 +13,7 @@ from rdoutils import releases_utils
 from rdoutils import rdoinfo as rdoinfo_utils
 from rdoutils.rdoinfo import NotInRdoinfoRelease
 from sh import rdopkg
+from sh import spectool
 
 from utils import log_message
 
@@ -161,6 +163,28 @@ def is_newer(new_evr, old_evr):
     return comp == 1
 
 
+def tarball_exists(package):
+    os.chdir("%s/%s" % (repodir, package))
+    try:
+        spectool('-g', "%s.spec" % package)
+        return True
+    except Exception:
+        return False
+
+
+def wait_for_tarball(package, retries=40, wait=30):
+    retry = 0
+    while retry < retries:
+        tarball_exist = tarball_exists(package)
+        if tarball_exist:
+            return True
+        else:
+            # Wait for sometime before retrying
+            time.sleep(wait)
+        retry += 1
+    return False
+
+
 def is_release_tag(package, version):
     os.chdir("%s/%s" % (repodir, package))
     is_tag = git.ref_exists('refs/tags/%s' % version)
@@ -168,7 +192,7 @@ def is_release_tag(package, version):
 
 
 def process_package(name, version, osp_release, dry_run, check_tag=False,
-                    chglog_user=None, chglog_email=None):
+                    check_tarball=False, chglog_user=None, chglog_email=None):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (name, version, osp_release), logfile)
     try:
@@ -194,6 +218,11 @@ def process_package(name, version, osp_release, dry_run, check_tag=False,
             log_message('INFO', "Version %s is not newer that existing %s" %
                         (new_evr, old_evr), logfile)
             return
+        if check_tarball and not wait_for_tarball(name):
+            tag_exists = is_release_tag(name, version)
+            log_message('INFO', "Tarball for %s %s is not ready yet, "
+                        "Tag exists: %s" %
+                        (name, version, tag_exists), logfile)
         log_message('INFO', "Sending review for package %s version %s" %
                     (name, version), logfile)
         new_version(name, version, osp_release, dry_run=dry_run,
@@ -233,6 +262,7 @@ def process_reviews(args):
             if new_pkg['osp_release'] == args.release:
                 process_package(new_pkg['name'], new_pkg['version'],
                                 new_pkg['osp_release'], args.dry_run,
+                                check_tarball=True,
                                 chglog_user=args.changelog_user,
                                 chglog_email=args.changelog_email)
 

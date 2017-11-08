@@ -12,3 +12,4 @@ git-review
 # Other binary requirements
 # git
 # python-rpm
+# rpmdevtools
