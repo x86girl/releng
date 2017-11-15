@@ -36,7 +36,9 @@ def parse_args():
                         help='Run in dry-run mode, do not send the review')
     parser.add_argument('-n', '--review-number', dest='number',
                         default=None,
-                        help='Review number to process')
+                        help='Review number to process, can also use '
+                        'commit:<commit hash> or change:<change-id> for strict'
+                        ' search for commit hash or change-id respectively')
     parser.add_argument('-p', '--rdoinfo-pins', dest='rdoinfo_pins',
                         default=None,
                         help='Path to rdoinfo when creating new releases from'

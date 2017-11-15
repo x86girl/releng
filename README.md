@@ -24,6 +24,24 @@ Directory `scripts` contains some bash scripts used for common tasks.
 to use virtualenv to run rdo_release_review, add '--system-site-packages' option when creating
 the virtualenv to use rpm module from the system.
 
+## Usage examples:-
+
+**rdo_release_review**
+-  To see available options for running the script, run:-
+   rdo_release_review --help
+
+-  To run rdo_release_review against a upstream change, run:-
+   # Replace <...> in below commands with a valid full or short commit hash, change-id or review id
+   rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n <reference review> --dry-run
+   # For strict search for a commit or change-id, run:-
+   rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n commit:<commit-id> --dry-run
+   rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n change:<change-id> --dry-run
+
+-  To run rdo_release_review against rdoinfo pin, run:-
+   rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r pike -p /home/$USER/rdoinfo --dry-run
+
+-  Don't pass --dry-run if you want the script to send reviews to https://review.rdoproject.org
+
 ## TODO
 
 1. Add custom location for rdoinfo in rdoutils/rdoinfo.py
