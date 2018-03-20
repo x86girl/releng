@@ -22,7 +22,7 @@ def main():
     reviews = review_utils.get_reviews_project(client, args.project,
                                                status=args.status,
                                                branch=args.branch)
-    for review in reviews:
+    for review in reviews[::-1]:
         print("%s %s %s %s %s %s" % (review['status'], review['_number'],
                                      review['project'], review['subject'],
                                      review['branch'],
