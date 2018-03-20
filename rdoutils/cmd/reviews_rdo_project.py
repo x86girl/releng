@@ -18,10 +18,12 @@ def parse_args():
 def main():
     args = parse_args()
     client = review_utils.get_gerrit_client('rdo')
+    gerrit_url = 'https://review.rdoproject.org/r/#/c/'
     reviews = review_utils.get_reviews_project(client, args.project,
                                                status=args.status,
                                                branch=args.branch)
     for review in reviews:
-        print("%s %s %s %s %s" % (review['status'], review['_number'],
-                                  review['project'], review['subject'],
-                                  review['branch']))
+        print("%s %s %s %s %s %s" % (review['status'], review['_number'],
+                                     review['project'], review['subject'],
+                                     review['branch'],
+                                     gerrit_url+str(review['_number'])))
