@@ -2,7 +2,7 @@ pygerrit >= 1.0.0
 sh >= 1.12.9
 pbr
 python_jenkins
-rdopkg
+rdopkg >= 0.46.0
 requests
 urllib3
 validators

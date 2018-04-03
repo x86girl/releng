@@ -7,7 +7,7 @@ import shutil
 import time
 
 from rdopkg.actionmods import rdoinfo
-from rdopkg.utils.cmd import git
+from rdopkg.utils.git import git
 from rdoutils import review_utils
 from rdoutils import releases_utils
 from rdoutils import rdoinfo as rdoinfo_utils
