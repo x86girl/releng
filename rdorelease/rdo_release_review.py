@@ -6,7 +6,8 @@ import rpm
 import shutil
 import time
 
-from rdopkg.actionmods import rdoinfo
+from distroinfo import info
+from distroinfo import query
 from rdopkg.utils.git import git
 from rdoutils import review_utils
 from rdoutils import releases_utils
@@ -16,6 +17,9 @@ from sh import rdopkg
 from sh import spectool
 
 from utils import log_message
+
+rdoinfo_repo = ('https://raw.githubusercontent.com/'
+                'redhat-openstack/rdoinfo/master/')
 
 
 def parse_args():
@@ -94,12 +98,12 @@ def new_pkgs_review(review, inforepo):
         for repo in release['repos']:
             log_message('INFO', "%s Found new repo version %s %s" % (
                         review_number, repo, release['version']), logfile)
-            pkg = inforepo.find_package(repo, strict=True)
+            pkg = query.find_package(inforepo, repo, strict=True)
             if not pkg:
                 # Some openstack packages are special and name in RDO !=
                 # that repo name, i.e.: oslo.log vs oslo-log
-                pkg = inforepo.find_package('git://git.openstack.org/%s' %
-                                            repo, strict=True)
+                repo_url = 'git://git.openstack.org/%s' % repo
+                pkg = query.find_package(inforepo, repo_url, strict=True)
             if pkg:
                 log_message('INFO', "%s Found new package %s %s" % (
                             review_number, pkg['name'], release['version']),
@@ -245,8 +249,10 @@ def process_package(name, version, osp_release, dry_run, check_tag=False,
 
 
 def process_reviews(args):
-    inforepo = rdoinfo.get_default_inforepo()
-    inforepo.init(force_fetch=True)
+    distroinfo = info.DistroInfo(
+        info_files='rdo.yml',
+        remote_info=rdoinfo_repo)
+    inforepo = distroinfo.get_info()
     if args.number:
         after_fmt = None
     else:

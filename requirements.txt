@@ -1,3 +1,4 @@
+distroinfo
 pygerrit >= 1.0.0
 sh >= 1.12.9
 pbr

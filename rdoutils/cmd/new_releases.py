@@ -1,9 +1,13 @@
 
 import argparse
 import datetime
-from rdopkg.actionmods import rdoinfo
+from distroinfo import info
+from distroinfo import query
 from rdoutils import review_utils
 from rdoutils import releases_utils
+
+rdoinfo_repo = ('https://raw.githubusercontent.com/'
+                'redhat-openstack/rdoinfo/master/')
 
 
 def parse_args():
@@ -36,15 +40,18 @@ def main():
                                                     after=after_fmt,
                                                     number=args.number,
                                                     status='merged')
-    inforepo = rdoinfo.get_default_inforepo()
-    inforepo.init(force_fetch=True)
+
+    distroinfo = info.DistroInfo(
+        info_files='rdo.yml',
+        remote_info=rdoinfo_repo)
+    inforepo = distroinfo.get_info()
     for review in reviews:
         submitted = format_time(review['submitted'])
         review_number = review['_number']
         releases = releases_utils.get_new_releases_review(review)
         for release in releases:
             for repo in release['repos']:
-                pkg = inforepo.find_package(repo, strict=True)
+                pkg = query.find_package(inforepo, repo, strict=True)
                 if pkg:
                     name = pkg['name']
                 else:
