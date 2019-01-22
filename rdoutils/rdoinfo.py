@@ -70,7 +70,7 @@ def update_tag(tag_type, project, tag_key, tag_value,
 
     """
     package = get_project(project, info_files='rdo-full.yml',
-                          local_dir=local_info)
+                          local_dir=local_dir)
     package[tag_type][tag_key] = tag_value
     # We update all tags for a given package to make sure we override
     # properly the default tags from package configs the first time
