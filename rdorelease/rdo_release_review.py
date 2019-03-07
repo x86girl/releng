@@ -55,6 +55,10 @@ def parse_args():
                         default=None,
                         help='User name to include in changelog entry for'
                         'the new release')
+    parser.add_argument('-t', '--rdoinfo-tag', dest='rdoinfo_tag',
+                        default=None,
+                        help='Tag in rdoinfo associated with this release.'
+                        'By default the release name')
     return parser.parse_args()
 
 
@@ -198,11 +202,14 @@ def is_release_tag(package, version):
 
 
 def process_package(name, version, osp_release, dry_run, check_tag=False,
-                    check_tarball=False, chglog_user=None, chglog_email=None):
+                    check_tarball=False, chglog_user=None, chglog_email=None,
+                    rdoinfo_tag=None):
     log_message('INFO', "Processing package %s version %s for release %s" %
                 (name, version, osp_release), logfile)
+    if rdoinfo_tag is None:
+        rdoinfo_tag = osp_release
     try:
-        rdoinfo_pin = rdoinfo_utils.get_pin(name, osp_release)
+        rdoinfo_pin = rdoinfo_utils.get_pin(name, rdoinfo_tag)
         if rdoinfo_pin and rdoinfo_pin != version:
             log_message('INFO', "Package %s pinned to version %s in rdoinfo" %
                         (name, rdoinfo_pin), logfile)
@@ -272,12 +279,17 @@ def process_reviews(args):
                                 new_pkg['osp_release'], args.dry_run,
                                 check_tarball=True,
                                 chglog_user=args.changelog_user,
-                                chglog_email=args.changelog_email)
+                                chglog_email=args.changelog_email,
+                                rdoinfo_tag=args.rdoinfo_tag)
 
 
 def process_rdoinfo(args):
+    if args.rdoinfo_tag is None:
+        rdoinfo_tag = args.release
+    else:
+        rdoinfo_tag = args.rdoinfo_tag
     new_pins = rdoinfo_utils.get_new_pinned_builds(args.rdoinfo_pins,
-                                                   args.release)
+                                                   rdoinfo_tag)
     for pin in new_pins:
         log_message('INFO', "rdoinfo Found new package %s %s" % (
                     pin['name'], pin['version']), logfile)
