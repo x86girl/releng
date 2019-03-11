@@ -291,12 +291,13 @@ def process_rdoinfo(args):
     new_pins = rdoinfo_utils.get_new_pinned_builds(args.rdoinfo_pins,
                                                    rdoinfo_tag)
     for pin in new_pins:
-        log_message('INFO', "rdoinfo Found new package %s %s" % (
-                    pin['name'], pin['version']), logfile)
-        process_package(pin['name'], pin['version'], pin['release'],
+        log_message('INFO', "rdoinfo Found new package %s %s %s" % (
+                    pin['name'], pin['version'], pin['release']), logfile)
+        process_package(pin['name'], pin['version'], args.release,
                         args.dry_run, check_tag=True,
                         chglog_user=args.changelog_user,
-                        chglog_email=args.changelog_email)
+                        chglog_email=args.changelog_email,
+                        rdoinfo_tag=rdoinfo_tag)
 
 
 def main():
