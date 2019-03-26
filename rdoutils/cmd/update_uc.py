@@ -17,7 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Update rdoinfo tags with '
                                      'upper-contraints.txt')
     parser.add_argument('-t', '--tag', dest='tag',
-                        default='stein-uc',
+                        default='train-uc',
                         help='tag to update')
     parser.add_argument('-l', '--rdoinfo-location', dest='location',
                         default='.', help='rdoinfo location')
