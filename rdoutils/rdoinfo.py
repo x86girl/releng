@@ -13,7 +13,7 @@ if not os.path.exists(local_info):
     os.makedirs(local_info)
 
 
-def get_projects(info_files='rdo-full.yml', local_dir=local_info,
+def get_projects(info_files='rdo.yml', local_dir=local_info,
                  tag=None, buildsys_tag=None):
     distroinfo = info.DistroInfo(
         info_files=info_files,
@@ -42,7 +42,7 @@ def get_projects(info_files='rdo-full.yml', local_dir=local_info,
     return pkgs_tagged
 
 
-def get_project(project, info_files='rdo-full.yml', local_dir=local_info):
+def get_project(project, info_files='rdo.yml', local_dir=local_info):
     all_packages = get_projects(info_files=info_files, local_dir=local_dir)
     for package in all_packages:
         if package['project'] == project:
@@ -118,7 +118,7 @@ def get_projects_distgit(tag=None, buildsys_tag=None):
 
 def get_pin(package, release):
     distroinfo = info.DistroInfo(
-        info_files='rdo-full.yml',
+        info_files='rdo.yml',
         local_info=local_info)
     inforepo = distroinfo.get_info()
     pkgs = [p for p in inforepo['packages'] if p['name'] == package]
@@ -139,7 +139,7 @@ def get_pin(package, release):
 def get_new_pinned_builds(location, release):
     new_pins = []
     distroinfo = info.DistroInfo(
-        info_files='rdo-full.yml',
+        info_files='rdo.yml',
         local_info=location)
     info2 = distroinfo.get_info()
     with helpers.cdir(location):
