@@ -1,0 +1,41 @@
+Process to update fedora clients in fedora from a RDO release
+
+0. Make sure required packages are installed:
+
+- rdopkg
+- koji
+- rpmbuild
+- fedpkg
+- spectool
+- centos-packager
+
+1. Get the list of OpenStack packages manage in RDO which are in a Fedora release:
+
+bash ./list_openstack_packages.sh train f32 |tee all_packages.txt
+
+2. Check the packages that need to be updated in fedora. Example to check packages in
+Fedora 32 from RDO Train:
+
+cat all_packages.txt|while read pkg
+do
+  bash ./check_fedora_sync.sh $pkg 32 train
+done
+
+3. Update packages in fedora distgit, push and build them (it first tries a scratch build)
+
+3.1 Update variables in sync_fedora_from_rdo.sh. Example:
+
+FEDUSER=amoralej
+FEDORA_RELEASE=32
+RDO_RELEASE=train
+CHANGELOG_NAME="Alfredo Moralejo"
+CHANGELOG_MAIL=amoralej@redhat.com
+
+
+3.2 Run synchronization script
+
+cat all_packages.txt|while read pkg
+do
+  bash ./sync_fedora_from_rdo.sh $pkg /tmp/fedora_update
+done
+
