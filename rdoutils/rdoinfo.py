@@ -105,7 +105,8 @@ def update_tag(tag_type, project, tag_key, tag_value,
 
 def get_projects_distgit(tag=None, buildsys_tag=None):
     re_distgit = re.compile('.*?((puppet|openstack)/.*).git')
-    projects = get_projects(tag=tag, buildsys_tag=buildsys_tag)
+    projects = get_projects(info_files='rdo-full.yml', tag=tag,
+                            buildsys_tag=buildsys_tag)
     distgits = []
     for project in projects:
         distgit_url = project['review-origin']
