@@ -23,7 +23,7 @@ echo "NOT stable $version tag found, checking MASTER"
 TAG=`git describe --tag --abbrev=0 upstream/master 2>/dev/null`
 fi
 echo "New version detected $TAG"
-rdopkg info $PKG |grep -A1 $version-uc
+rdopkg findpkg $PKG |grep -A1 $version-uc
 #
 
 read -n 2
