@@ -61,7 +61,7 @@ def load_uc(projects_filter):
     uc = {}
     with open(UC, 'rb') as ucfile:
         for line in ucfile.readlines():
-            name, version_spec = line.rstrip().split('===')
+            name, version_spec = line.decode('utf8').rstrip().split('===')
             if name and projects_filter(name):
                 version = version_spec.split(';')[0]
                 if version:
@@ -76,7 +76,7 @@ def update_uc():
     release_tag = args.tag
     rdoinfo_dir = args.location
     uc = load_uc(filter_all_minus_tripleo)
-    uc_projects = uc.keys()
+    uc_projects = list(uc.keys())
 
     distroinfo = info.DistroInfo(info_files='rdo-full.yml',
                                  local_info=rdoinfo_dir)

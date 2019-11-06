@@ -1,5 +1,5 @@
 distroinfo
-pygerrit >= 1.0.0
+pygerrit2 == 2.0.9
 sh >= 1.12.9
 pbr
 python_jenkins

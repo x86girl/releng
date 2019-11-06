@@ -41,13 +41,13 @@ def main():
         for parm in args.parameters:
             parm_list = parm.split('=')
             if len(parm_list) != 2:
-                print "Error in parameter %s: it should be key=value" % parm
+                print("Error in parameter %s: it should be key=value" % parm)
                 sys.exit(1)
             params[parm_list[0]] = parm_list[1]
         job = jenkins_utils.start_job(server,
                                       args.job_name,
                                       parameters=params,
                                       token=token)
-        print job
+        print(job)
     except jenkins.NotFoundException:
         print("Job %s does not exist" % args.job_name)

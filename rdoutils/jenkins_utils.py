@@ -28,10 +28,10 @@ def get_build_info(server, job_name, job_number):
 
 
 def print_build_info(build):
-    print "Name: %s" % build['fullDisplayName']
-    print "Number: %s" % build['number']
-    print "Result: %s" % build['result']
-    print "Url: %s" % build['url']
+    print("Name: %s" % build['fullDisplayName'])
+    print("Number: %s" % build['number'])
+    print("Result: %s" % build['result'])
+    print("Url: %s" % build['url'])
 
 
 def wait_for_job(server, job_name):

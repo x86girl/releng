@@ -2,7 +2,7 @@
 import requests
 import validators
 
-from pygerrit.rest import GerritRestAPI
+from pygerrit2 import GerritRestAPI
 from requests.auth import HTTPBasicAuth
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -60,7 +60,7 @@ def get_review(review):
 
 def get_reviews_project(client, project, **kwargs):
     url = "/changes/?q=project:\"^.*%s.*\"" % project
-    for key, value in kwargs.iteritems():
+    for key, value in kwargs.items():
         if value:
             url = "%s+%s:%s" % (url, key, value)
     return client.get(url)
@@ -68,7 +68,7 @@ def get_reviews_project(client, project, **kwargs):
 
 def get_rdo_projects(client, **kwargs):
     url = '/projects/?r=(puppet|openstack)%2F.*distgit'
-    for key, value in kwargs.iteritems():
+    for key, value in kwargs.items():
         if value:
             url = "%s&%s=%s" % (url, key, value)
     projects = client.get(url)
