@@ -28,7 +28,7 @@ def get_release_info(release_content):
         'name': deliverable['team'],
         'version': latest_release['version'],
         'repos': repos,
-        }
+    }
     return release
 
 

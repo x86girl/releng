@@ -36,8 +36,8 @@ def get_projects(info_files='rdo.yml', local_dir=local_info,
     # value in buildsys-tags dict.
     if buildsys_tag is not None:
         for package in all_packages:
-            if ('buildsys-tags' in package.keys() and
-                    buildsys_tag in package['buildsys-tags'].keys()):
+            if ('buildsys-tags' in package.keys()
+                    and buildsys_tag in package['buildsys-tags'].keys()):
                 pkgs_tagged.append(package)
     return pkgs_tagged
 

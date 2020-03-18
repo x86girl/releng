@@ -26,4 +26,4 @@ def main():
         print("%s %s %s %s %s %s" % (review['status'], review['_number'],
                                      review['project'], review['subject'],
                                      review['branch'],
-                                     gerrit_url+str(review['_number'])))
+                                     gerrit_url + str(review['_number'])))

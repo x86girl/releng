@@ -31,8 +31,8 @@ UC = 'upper-constraints.txt'
 # filter for Oslo and clients
 def filter_oslo_clients(project):
     return project.startswith('oslo') or \
-           project.endswith('client') or \
-           project == 'osc-lib'
+        project.endswith('client') or \
+        project == 'osc-lib'
 
 
 def filter_all(project):
@@ -41,16 +41,16 @@ def filter_all(project):
 
 def filter_all_minus_tripleo(project):
     TRIPLEO_PROJECTS = [
-      'diskimage-builder',
-      'os-apply-config',
-      'os-collect-config',
-      'os-net-config',
-      'os-refresh-config',
-      'tripleo-common',
-      'mistral',
-      'tempest',
-      'instack-undercloud',
-      'paunch',
+        'diskimage-builder',
+        'os-apply-config',
+        'os-collect-config',
+        'os-net-config',
+        'os-refresh-config',
+        'tripleo-common',
+        'mistral',
+        'tempest',
+        'instack-undercloud',
+        'paunch',
     ]
     return project not in TRIPLEO_PROJECTS
 
