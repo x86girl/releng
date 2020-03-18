@@ -106,8 +106,11 @@ def new_pkgs_review(review, inforepo):
             if not pkg:
                 # Some openstack packages are special and name in RDO !=
                 # that repo name, i.e.: oslo.log vs oslo-log
-                repo_url = 'git://git.openstack.org/%s' % repo
-                pkg = query.find_package(inforepo, repo_url, strict=True)
+                repo_url = 'git://opendev.org/%s' % repo
+                repo_url_old = 'git://git.openstack.org/%s' % repo
+                pkg = \
+                    query.find_package(inforepo, repo_url, strict=True) or \
+                    query.find_package(inforepo, repo_url_old, strict=True)
             if pkg:
                 log_message('INFO', "%s Found new package %s %s" % (
                             review_number, pkg['name'], release['version']),

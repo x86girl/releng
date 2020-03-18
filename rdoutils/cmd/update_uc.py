@@ -2,9 +2,9 @@
 #
 # Update OpenStack Oslo and Clients libraries versions in rdoinfo from:
 # * master branch (default)
-# curl -OJ http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=master # noqa
+# curl -OJ https://opendev.org/openstack/requirements/raw/branch/master/upper-constraints.txt # noqa
 # * stable/ocata
-# curl -OJ http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/ocata # noqa
+# curl -OJ https://opendev.org/openstack/requirements/raw/branch/stable/ocata/upper-constraints.txt # noqa
 
 import argparse
 import copy
