@@ -16,7 +16,7 @@ from rdoutils.rdoinfo import NotInRdoinfoRelease
 from sh import rdopkg
 from sh import spectool
 
-from utils import log_message
+from .utils import log_message
 
 rdoinfo_repo = ('https://raw.githubusercontent.com/'
                 'redhat-openstack/rdoinfo/master/')
@@ -226,7 +226,7 @@ def process_package(name, version, osp_release, dry_run, check_tag=False,
         new_vers = new_version(name, version, osp_release, dry_run=True,
                                chglog_user=chglog_user,
                                chglog_email=chglog_email)
-        if new_vers_stderr(new_vers.stderr):
+        if new_vers_stderr(new_vers.stderr.decode('utf-8')):
             log_message('INFO', new_vers_stderr(new_vers.stderr).group(1),
                         logfile)
         new_evr = get_evr(name)
