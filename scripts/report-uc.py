@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 from re import search
 
 ARCH = 'x86_64'
-DEFAULT_BRANCH = 'master'
+DEFAULT_RELEASE = 'master'
 DEFAULT_DISTRO = 'centos8'
 DEFAULT_KOJI_PROFILE = 'cbs'
 DEFAULT_PY_VERS = {'centos7': '2.7', 'centos8': '3.6',
@@ -62,17 +62,18 @@ def load_uc():
     Returns a dictionary with a dictionary (module_name, module_version).
     """
     uc = {}
-    if args.branch != 'master':
-        branch = 'stable/{}'.format(args.branch)
+    if args.release != 'master':
+        branch = 'stable/{}'.format(args.release)
     else:
-        branch = args.branch
-    uc_file = requests.get(UC.format(branch))
+        branch = args.release
+    url = UC.format(branch)
+    uc_file = requests.get(url)
     if uc_file.status_code == 404:
-        print('The Openstack release "{}" does not exist.'.format(args.branch))
+        print('The Openstack release "{}" does not exist.'.format(
+            args.release))
         sys.exit(1)
     elif uc_file.status_code != 200:
-        print('Could not download upper-constraints file from {}'.format(
-            UC.format(branch)))
+        print('Could not download upper-constraints file from {}'.format(url))
         sys.exit(1)
 
     for line in uc_file.text.split('\n'):
@@ -225,13 +226,13 @@ def get_packages_provided_by_repos(mod_name, mod_version, provided_uc):
                                                pkg.name,
                                                pkg.version,
                                                pkg.reponame,
-                                               args.branch))
+                                               args.release))
     else:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            '',
-                                           args.branch))
+                                           args.release))
 
 
 def list_builds_from_tag(tag):
@@ -273,13 +274,13 @@ def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc):
                                            pkg_name,
                                            builds[pkg_name]['version'],
                                            builds[pkg_name]['tag'],
-                                           args.branch))
+                                           args.release))
     except KeyError:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            tag,
-                                           args.branch))
+                                           args.release))
 
 
 def provides_uc():
@@ -346,11 +347,11 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=("Compare upper-constraints "
                                                   "with existing repos/tags."))
-    parser.add_argument('-b', '--branch',
+    parser.add_argument('-o', '--release',
                         required=True,
-                        default=DEFAULT_BRANCH,
+                        default=DEFAULT_RELEASE,
                         help=('openstack release (i.e. [{}], ussuri, train '
-                              ', etc)'.format(DEFAULT_BRANCH)))
+                              ', etc)'.format(DEFAULT_RELEASE)))
     parser.add_argument('-d', '--distro',
                         choices=DISTROS,
                         default=DEFAULT_DISTRO,
