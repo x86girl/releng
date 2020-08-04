@@ -2,12 +2,13 @@
 import argparse
 import dnf
 import koji
+import os
 import pymod2pkg
 import random
 import requests
 import rpm
 import sys
-import os
+import yaml
 from tempfile import TemporaryDirectory
 from re import search
 from urllib.parse import urlparse
@@ -323,24 +324,25 @@ def provides_uc():
 
 
 def print_source_informations(nbr_of_matches_from_source):
-    print("\nEnabled repositories/tag:")
+    sources = []
     if pkgs_base is not None and pkgs_base.repos:
         for repo in pkgs_base.repos.iter_enabled():
             try:
                 number_of_pkgs = nbr_of_matches_from_source[repo.id]
             except KeyError:
                 number_of_pkgs = 0
-            print("- repoid: {}".format(repo.id))
-            print("  number: {}".format(number_of_pkgs))
-            print("  baseurl: {}".format(repo.baseurl[0]))
+            sources.append({'repoid': repo.id,
+                            'number': number_of_pkgs,
+                            'baseurl': repo.baseurl[0]})
     if args.tag:
         try:
             number_of_pkgs = nbr_of_matches_from_source[args.tag]
         except KeyError:
             number_of_pkgs = 0
-        print("- tag: {}".format(args.tag))
-        print("  number: {}".format(number_of_pkgs))
-        print("  koji_profile: {}".format(args.koji_profile))
+        sources.append({'tag': args.tag,
+                        'number': number_of_pkgs,
+                        'koji_profile': args.koji_profile})
+    print("\nEnabled repositories/tag:\n{}".format(yaml.safe_dump(sources)))
 
 
 def increment_counter(source, counter):
