@@ -3,12 +3,14 @@ import argparse
 import dnf
 import koji
 import pymod2pkg
+import random
 import requests
 import rpm
 import sys
 import os
 from tempfile import TemporaryDirectory
 from re import search
+from urllib.parse import urlparse
 
 ARCH = 'x86_64'
 DEFAULT_RELEASE = 'master'
@@ -88,9 +90,32 @@ def load_uc():
     return uc
 
 
-def download_repo_from_url(url, file_name, dest_dir):
-    """Download .repo file from an URL"""
+def is_url(url):
+    try:
+        result = urlparse(url)
+        if result.scheme not in ['http', 'https']:
+            return False
+        if all([result.scheme, result.netloc]):
+            return True
+        else:
+            return False
+    except Exception:
+        return False
+
+
+def download_repo_from_url(url, dest_dir):
+    """
+    Download .repo file from an URL
+    The filenames need to be randomized to avoid files to be
+    overwritten on FS.
+    """
+    if not is_url(url):
+        print("'{}' is probably not a valid URL.".format(url))
+        sys.exit(1)
+
+    file_name = random.getrandbits(128)
     local_repo_file = '{}/{}.repo'.format(dest_dir, file_name)
+
     remote_file = requests.get(url)
     if remote_file.status_code == 404:
         print('The .repo file does not exist at: {}'.format(url))
@@ -98,6 +123,7 @@ def download_repo_from_url(url, file_name, dest_dir):
     elif remote_file.status_code != 200:
         print('Could not download the .repo file from {}'.format(url))
         sys.exit(1)
+
     r = requests.get(url)
     with open(local_repo_file, 'wb') as output_file:
         output_file.write(r.content)
@@ -112,14 +138,7 @@ def add_repo_from_url_in_repos_dir():
     """
     local_repo_files = []
     for _repo_url in args.repo_url:
-        try:
-            repo_file_name, repo_url = _repo_url.split(',')
-        except ValueError:
-            print("Could not this repo-url: {}".format(_repo_url))
-            sys.exit(1)
-        local_repo = download_repo_from_url(repo_url,
-                                            repo_file_name,
-                                            args.repos_dir)
+        local_repo = download_repo_from_url(_repo_url, args.repos_dir)
         local_repo_files.append(local_repo)
     return local_repo_files
 
@@ -364,8 +383,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--repo', action='append', default=[],
                         help="add repo (i.e repoid,baseurl)")
     parser.add_argument('--repo-url', action='append', default=[],
-                        help="add a .repo file from an URL "
-                             "(i.e repofilename,repourl)")
+                        help="add a .repo file from an URL")
     parser.add_argument('-R', '--repos-dir',
                         help="directory containing repo files")
     parser.add_argument('-s', '--status',
