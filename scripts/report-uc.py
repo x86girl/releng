@@ -54,26 +54,27 @@ class UpperConstraint(object):
             return 'lower'
 
     def __str__(self):
-        return ','.join([self.release, self.module_name, self.module_version,
-                         self.pkg_name, self.pkg_version, self.source,
-                         self.status])
+        return ','.join(self.to_list())
+
+    def to_list(self):
+        return [self.release, self.module_name, self.module_version,
+                self.pkg_name, self.pkg_version, self.source, self.status]
 
 
-def load_uc():
+def load_uc(release, distro):
     """
     Load upper-constraints file directly from Github mirror.
     Returns a dictionary with a dictionary (module_name, module_version).
     """
     uc = {}
-    if args.release != 'master':
-        branch = 'stable/{}'.format(args.release)
+    if release != 'master':
+        branch = 'stable/{}'.format(release)
     else:
-        branch = args.release
+        branch = release
     url = UC.format(branch)
     uc_file = requests.get(url)
     if uc_file.status_code == 404:
-        print('The Openstack release "{}" does not exist.'.format(
-            args.release))
+        print('The Openstack release "{}" does not exist.'.format(release))
         sys.exit(1)
     elif uc_file.status_code != 200:
         print('Could not download upper-constraints file from {}'.format(url))
@@ -85,7 +86,7 @@ def load_uc():
             continue
         name, version, py_vers = m.group(1), m.group(2), m.group(4)
         # we skip it if the python_version does not match the distro's one
-        if py_vers is not None and py_vers != DEFAULT_PY_VERS[args.distro]:
+        if py_vers is not None and py_vers != DEFAULT_PY_VERS[distro]:
             continue
         uc[name] = version
     return uc
@@ -131,15 +132,15 @@ def download_repo_from_url(url, dest_dir):
         return local_repo_file
 
 
-def add_repo_from_url_in_repos_dir():
+def add_repo_from_url_in_repos_dir(repo_url, repos_dir):
     """
     Add .repo files from URL in repos_dir directory.
     Return a list of the downloaded file paths that need to be removed from
     filesystem after being add to dnf.Base.
     """
     local_repo_files = []
-    for _repo_url in args.repo_url:
-        local_repo = download_repo_from_url(_repo_url, args.repos_dir)
+    for _repo_url in repo_url:
+        local_repo = download_repo_from_url(_repo_url, repos_dir)
         local_repo_files.append(local_repo)
     return local_repo_files
 
@@ -164,7 +165,7 @@ def create_dir(path):
         sys.exit(1)
 
 
-def dnf_base(distro):
+def dnf_base(distro, repos_dir):
     """
     Instanciate a DNF.base for the distro passed as argument, and
     configure it.
@@ -178,17 +179,17 @@ def dnf_base(distro):
     conf.substitutions['basearch'] = ARCH
     if distro_name == 'centos':
         conf.substitutions['contentdir'] = distro_name
-    conf.reposdir = args.repos_dir
+    conf.reposdir = repos_dir
     conf.config_file_path = ''
     return base
 
 
-def add_repos_to_base(base):
+def add_repos_to_base(base, repo):
     """
     Add repos  passed as arguments (repoid,baseurl) in the 'base' object.
     """
     repo_id, base_url = '', ''
-    for _repo in args.repo:
+    for _repo in repo:
         try:
             repo_id, base_url = _repo.split(',')
         except ValueError:
@@ -197,7 +198,7 @@ def add_repos_to_base(base):
         base.repos.add_new_repo(repo_id, base.conf, baseurl=[base_url])
 
 
-def download_repos_metadata():
+def download_repos_metadata(repo_url, repo, repos_dir, distro):
     """
     Load information about packages from the enabled repositories into
     the sack.
@@ -205,9 +206,9 @@ def download_repos_metadata():
     global pkgs_base
     if pkgs_base:
         return pkgs_base
-    pkgs_base = dnf_base(args.distro)
-    add_repos_to_base(pkgs_base)
-    local_repo_url_files = add_repo_from_url_in_repos_dir()
+    pkgs_base = dnf_base(distro, repos_dir)
+    add_repos_to_base(pkgs_base, repo)
+    local_repo_url_files = add_repo_from_url_in_repos_dir(repo_url, repos_dir)
     pkgs_base.read_all_repos()
     remove_files(local_repo_url_files)
     pkgs_base.fill_sack(load_system_repo=False)
@@ -218,7 +219,6 @@ def repoquery(*args, **kwargs):
     A Python function that somehow works as the repoquery command.
     Only supports --provides and --all.
     """
-    download_repos_metadata()
     if 'provides' in kwargs:
         return pkgs_base.sack.query().filter(provides=kwargs['provides']).run()
     if 'all' in kwargs and kwargs['all']:
@@ -226,7 +226,8 @@ def repoquery(*args, **kwargs):
     raise RuntimeError('unknown query')
 
 
-def get_packages_provided_by_repos(mod_name, mod_version, provided_uc):
+def get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
+                                   repo_url, repo, repos_dir, distro, release):
     """
     Find packages that provide the module.
     For distro with releasever > 7, we take advantage of the Python
@@ -235,10 +236,11 @@ def get_packages_provided_by_repos(mod_name, mod_version, provided_uc):
     After, the repoquery command execution, we append the global list with the
     result.
     """
-    if int(args.distro[-1]) > 7:
+    if int(distro[-1]) > 7:
         pkg_name = "python3dist({})".format(mod_name.lower())
     else:
         pkg_name = pymod2pkg.module2package(mod_name, 'fedora')
+    download_repos_metadata(repo_url, repo, repos_dir, distro)
     provides = repoquery(provides=pkg_name)
     if len(provides) > 0:
         for pkg in provides:
@@ -246,16 +248,16 @@ def get_packages_provided_by_repos(mod_name, mod_version, provided_uc):
                                                pkg.name,
                                                pkg.version,
                                                pkg.reponame,
-                                               args.release))
+                                               release))
     else:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            '',
-                                           args.release))
+                                           release))
 
 
-def list_builds_from_tag(tag):
+def list_builds_from_tag(tag, koji_profile):
     """
     Get builds from a Koji tag passed as argument.
     A Koji profile can also be passed as argument.
@@ -263,7 +265,7 @@ def list_builds_from_tag(tag):
     """
     builds = {}
     try:
-        koji_module = koji.get_profile_module(args.koji_profile)
+        koji_module = koji.get_profile_module(koji_profile)
     except Exception as e:
         print('Error: could not load the koji profile ({})'.format(e))
         sys.exit(1)
@@ -279,14 +281,15 @@ def list_builds_from_tag(tag):
     return builds
 
 
-def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc):
+def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc,
+                           koji_profile, release):
     """
     Find builds that provide the module.
     """
     try:
         builds = tag_builds[tag]
     except KeyError:
-        builds = list_builds_from_tag(tag)
+        builds = list_builds_from_tag(tag, koji_profile)
     pkg_name = pymod2pkg.module2package(mod_name, 'fedora')
     try:
         builds[pkg_name]
@@ -294,30 +297,31 @@ def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc):
                                            pkg_name,
                                            builds[pkg_name]['version'],
                                            builds[pkg_name]['tag'],
-                                           args.release))
+                                           release))
     except KeyError:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            tag,
-                                           args.release))
+                                           release))
 
 
-def provides_uc():
+def provides_uc(release, distro, repo_url, repo, repos_dir, tag, koji_profile):
     provided_uc = []
-    uc = load_uc()
-    if args.repo_url and args.repos_dir is None:
+    uc = load_uc(release, distro)
+    if repos_dir is None:
         td = TemporaryDirectory()
-        args.repos_dir = td.name
+        repos_dir = td.name
 
     for mod_name, mod_version in uc.items():
-        if args.repo or args.repos_dir or args.repo_url:
-            get_packages_provided_by_repos(mod_name, mod_version, provided_uc)
-        if args.tag:
-            get_builds_by_koji_tag(args.tag, mod_name, mod_version,
-                                   provided_uc)
-        if not args.repo and not args.repos_dir and not args.repo_url \
-                and not args.tag:
+        if repo or repos_dir or repo_url:
+            get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
+                                           repo_url, repo, repos_dir, distro,
+                                           release)
+        if tag:
+            get_builds_by_koji_tag(tag, mod_name, mod_version,
+                                   provided_uc, koji_profile, release)
+        if not repo and not repos_dir and not repo_url and not tag:
             print('Please provide at least one repo or koji tag.')
             sys.exit(1)
     return provided_uc
@@ -353,15 +357,16 @@ def increment_counter(source, counter):
         counter.update({source: 1})
 
 
-def main():
+def main(release, distro, repo_url, repo, repos_dir, tag, koji_profile,
+         status, verbose):
     nbr_of_matches_from_source = {}
-    for uc in provides_uc():
-        if args.status == '' or \
-                (args.status != '' and uc.status == args.status):
+    for uc in provides_uc(release, distro, repo_url, repo, repos_dir,
+                          tag, koji_profile):
+        if status == '' or (status != '' and uc.status == status):
             print(uc)
-            if args.verbose:
+            if verbose:
                 increment_counter(uc.source, nbr_of_matches_from_source)
-    if args.verbose:
+    if verbose:
         print_source_informations(nbr_of_matches_from_source)
 
 
@@ -403,4 +408,5 @@ if __name__ == '__main__':
                         help='verbose mode')
     args = parser.parse_args()
 
-    main()
+    main(args.release, args.distro, args.repo_url, args.repo, args.repos_dir,
+         args.tag, args.koji_profile, args.status, args.verbose)
