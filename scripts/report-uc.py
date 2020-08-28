@@ -9,9 +9,15 @@ import requests
 import rpm
 import sys
 import yaml
-from tempfile import TemporaryDirectory
+
 from re import search
-from urllib.parse import urlparse
+
+if sys.version_info[0] == 3:
+    from tempfile import TemporaryDirectory
+    from urllib.parse import urlparse
+else:
+    from tempfile import mkdtemp as TemporaryDirectory
+    from urlparse import urlparse
 
 ARCH = 'x86_64'
 DEFAULT_RELEASE = 'master'
@@ -157,9 +163,8 @@ def create_dir(path):
     """
     Create a directory, do nothing if already exists."""
     try:
-        os.makedirs(path)
-    except FileExistsError:
-        pass
+        if not os.path.exists(path):
+            os.makedirs(path)
     except OSError as e:
         print("Could not create directory: {}".format(e))
         sys.exit(1)
@@ -311,7 +316,10 @@ def provides_uc(release, distro, repo_url, repo, repos_dir, tag, koji_profile):
     uc = load_uc(release, distro)
     if repos_dir is None:
         td = TemporaryDirectory()
-        repos_dir = td.name
+        try:
+            repos_dir = td.name
+        except AttributeError:
+            repos_dir = td
 
     for mod_name, mod_version in uc.items():
         if repo or repos_dir or repo_url:
