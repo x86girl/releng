@@ -248,13 +248,13 @@ def process_package(name, version, osp_release, dry_run, check_tag=False,
                         logfile)
     except NotBranchedPackage as e:
         log_message('INFO', "Package %s %s for %s is not required: %s" %
-                    (name, version, osp_release, e.message), logfile)
+                    (name, version, osp_release, e), logfile)
     except NotInRdoinfoRelease:
         log_message('INFO', "Package %s is not in release %s" % (name,
                     osp_release), logfile)
     except Exception as e:
         log_message('ERROR', "Package %s %s for %s failed to build: %s" %
-                    (name, version, osp_release, e.message), logfile)
+                    (name, version, osp_release, e), logfile)
         raise e
 
 
