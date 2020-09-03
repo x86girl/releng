@@ -3,15 +3,26 @@ import re
 import requests
 import yaml
 
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 
 def get_release_file(commit, path):
+    retry_strategy = Retry(
+        total=3,
+        status_forcelist=[404, 429, 500, 502, 503, 504],
+        method_whitelist=["GET"],
+        backoff_factor=2,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("https://", adapter)
+    http.mount("http://", adapter)
     url = ("https://raw.githubusercontent.com/openstack/releases/%s/%s" %
            (commit, path))
-    release = requests.get(url)
+    release = http.get(url)
     if release.status_code == 200:
         return release.text
-    else:
-        return None
 
 
 def get_release_info(release_content):
