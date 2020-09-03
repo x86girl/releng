@@ -69,7 +69,7 @@ def update_tag(tag_type, project, tag_key, tag_value,
                     local_dir='/tmp/rdoinfo')
 
     """
-    package = get_project(project, info_files='rdo-full.yml',
+    package = get_project(project, info_files=info_files,
                           local_dir=local_dir)
     if tag_type not in package.keys():
         package[tag_type] = {}
