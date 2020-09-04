@@ -225,7 +225,8 @@ def repoquery(*args, **kwargs):
     Only supports --provides and --all.
     """
     if 'provides' in kwargs:
-        return pkgs_base.sack.query().filter(provides=kwargs['provides']).run()
+        return pkgs_base.sack.query().filter(provides=kwargs['provides']).\
+            latest().run()
     if 'all' in kwargs and kwargs['all']:
         return pkgs_base.sack.query()
     raise RuntimeError('unknown query')
@@ -247,14 +248,14 @@ def get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
         pkg_name = pymod2pkg.module2package(mod_name, 'fedora')
     download_repos_metadata(repo_url, repo, repos_dir, distro)
     provides = repoquery(provides=pkg_name)
-    if len(provides) > 0:
-        for pkg in provides:
-            provided_uc.append(UpperConstraint(mod_name, mod_version,
-                                               pkg.name,
-                                               pkg.version,
-                                               pkg.reponame,
-                                               release))
-    else:
+    try:
+        pkg = provides.pop()
+        provided_uc.append(UpperConstraint(mod_name, mod_version,
+                                           pkg.name,
+                                           pkg.version,
+                                           pkg.reponame,
+                                           release))
+    except IndexError:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
