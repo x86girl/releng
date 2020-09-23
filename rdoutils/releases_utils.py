@@ -18,7 +18,7 @@ def get_release_file(commit, path):
     http = requests.Session()
     http.mount("https://", adapter)
     http.mount("http://", adapter)
-    url = ("https://raw.githubusercontent.com/openstack/releases/%s/%s" %
+    url = ("https://opendev.org/openstack/releases/raw/commit/%s/%s" %
            (commit, path))
     release = http.get(url)
     if release.status_code == 200:
