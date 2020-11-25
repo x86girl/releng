@@ -37,13 +37,16 @@ tag_builds = {}
 class UpperConstraint(object):
 
     def __init__(self, module_name, module_version, pkg_name, pkg_version,
-                 source, release, status=None):
+                 source, release, overridden_repos,
+                 show_overridden_repos=False):
         self.module_name = module_name
         self.module_version = module_version
         self.pkg_name = pkg_name
         self.pkg_version = pkg_version
         self.source = source
         self.release = release
+        self.show_overridden_repos = show_overridden_repos
+        self.overridden_repos = overridden_repos
         self.status = self.vcmp(self.module_version, self.pkg_version)
 
     def vcmp(self, v1, v2=None):
@@ -63,8 +66,13 @@ class UpperConstraint(object):
         return ','.join(self.to_list())
 
     def to_list(self):
-        return [self.release, self.module_name, self.module_version,
-                self.pkg_name, self.pkg_version, self.source, self.status]
+        if self.show_overridden_repos:
+            return [self.release, self.module_name, self.module_version,
+                    self.pkg_name, self.pkg_version, self.source, self.status,
+                    self.overridden_repos]
+        else:
+            return [self.release, self.module_name, self.module_version,
+                    self.pkg_name, self.pkg_version, self.source, self.status]
 
 
 def load_uc(release, distro):
@@ -225,15 +233,33 @@ def repoquery(*args, **kwargs):
     Only supports --provides and --all.
     """
     if 'provides' in kwargs:
-        return pkgs_base.sack.query().filter(provides=kwargs['provides']).\
-            latest().run()
+        if 'latest' in kwargs and kwargs['latest'] is True:
+            return pkgs_base.sack.query().filter(provides=kwargs['provides']).\
+                latest().run()
+        else:
+            return pkgs_base.sack.query().filter(provides=kwargs['provides']).\
+                run()
     if 'all' in kwargs and kwargs['all']:
         return pkgs_base.sack.query()
     raise RuntimeError('unknown query')
 
 
+def get_all_repos_providing_pkg(pkg_name):
+    """
+    Get all repositories in the sack providing the package.
+    Return a list of repo names.
+    """
+    repos = list()
+    provides = repoquery(provides=pkg_name)
+    for _p in provides:
+        if _p.reponame not in repos:
+            repos.append(_p.reponame)
+    return repos
+
+
 def get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
-                                   repo_url, repo, repos_dir, distro, release):
+                                   repo_url, repo, repos_dir, distro, release,
+                                   show_overridden_repos):
     """
     Find packages that provide the module.
     For distro with releasever > 7, we take advantage of the Python
@@ -247,20 +273,30 @@ def get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
     else:
         pkg_name = pymod2pkg.module2package(mod_name, 'fedora')
     download_repos_metadata(repo_url, repo, repos_dir, distro)
-    provides = repoquery(provides=pkg_name)
+    latest_pkg = repoquery(provides=pkg_name, latest=True)
+    all_repos_providing_pkg = get_all_repos_providing_pkg(pkg_name)
     try:
-        pkg = provides.pop()
+        pkg = latest_pkg.pop()
+        all_repos_providing_pkg.remove(pkg.reponame)
+        if len(all_repos_providing_pkg) > 0:
+            overridden_repos = ' '.join(all_repos_providing_pkg)
+        else:
+            overridden_repos = 'None'
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            pkg.name,
                                            pkg.version,
                                            pkg.reponame,
-                                           release))
+                                           release,
+                                           overridden_repos,
+                                           show_overridden_repos))
     except IndexError:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            '',
-                                           release))
+                                           release,
+                                           '',
+                                           show_overridden_repos))
 
 
 def list_builds_from_tag(tag, koji_profile):
@@ -288,7 +324,7 @@ def list_builds_from_tag(tag, koji_profile):
 
 
 def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc,
-                           koji_profile, release):
+                           koji_profile, release, show_overridden_repos):
     """
     Find builds that provide the module.
     """
@@ -303,16 +339,21 @@ def get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc,
                                            pkg_name,
                                            builds[pkg_name]['version'],
                                            builds[pkg_name]['tag'],
-                                           release))
+                                           release,
+                                           'N/A',
+                                           show_overridden_repos))
     except KeyError:
         provided_uc.append(UpperConstraint(mod_name, mod_version,
                                            '',
                                            '',
                                            tag,
-                                           release))
+                                           release,
+                                           'N/A',
+                                           show_overridden_repos))
 
 
-def provides_uc(release, distro, repo_url, repo, repos_dir, tag, koji_profile):
+def provides_uc(release, distro, repo_url, repo, repos_dir, tag, koji_profile,
+                show_overridden_repos):
     provided_uc = []
     uc = load_uc(release, distro)
     if repos_dir is None:
@@ -326,10 +367,11 @@ def provides_uc(release, distro, repo_url, repo, repos_dir, tag, koji_profile):
         if repo or repos_dir or repo_url:
             get_packages_provided_by_repos(mod_name, mod_version, provided_uc,
                                            repo_url, repo, repos_dir, distro,
-                                           release)
+                                           release, show_overridden_repos)
         if tag:
-            get_builds_by_koji_tag(tag, mod_name, mod_version,
-                                   provided_uc, koji_profile, release)
+            get_builds_by_koji_tag(tag, mod_name, mod_version, provided_uc,
+                                   koji_profile, release,
+                                   show_overridden_repos)
         if not repo and not repos_dir and not repo_url and not tag:
             print('Please provide at least one repo or koji tag.')
             sys.exit(1)
@@ -367,10 +409,10 @@ def increment_counter(source, counter):
 
 
 def main(release, distro, repo_url, repo, repos_dir, tag, koji_profile,
-         status, verbose):
+         status, verbose, show_overridden_repos):
     nbr_of_matches_from_source = {}
     for uc in provides_uc(release, distro, repo_url, repo, repos_dir,
-                          tag, koji_profile):
+                          tag, koji_profile, show_overridden_repos):
         if status == '' or (status != '' and uc.status == status):
             print(uc)
             if verbose:
@@ -407,6 +449,9 @@ if __name__ == '__main__':
                         default='',
                         help=("filter on status (i.e lower, equal, greater, "
                               "missing)"))
+    parser.add_argument('-S', '--show-overridden-repos',
+                        action="store_true",
+                        help=('show the other repos providing the package.'))
     parser.add_argument('-t', '--tag',
                         default='',
                         help=('get builds from a koji tag '
@@ -418,4 +463,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(args.release, args.distro, args.repo_url, args.repo, args.repos_dir,
-         args.tag, args.koji_profile, args.status, args.verbose)
+         args.tag, args.koji_profile, args.status, args.verbose,
+         args.show_overridden_repos)
