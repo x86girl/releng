@@ -16,13 +16,17 @@ CHANGELOG_MAIL=amoralej@redhat.com
 
 FEDORA_TAG=f${FEDORA_RELEASE}
 FEDORA_DIST=fc${FEDORA_RELEASE}
+CBS_TAG_PREFIX="cloud8"
 
 INITIAL_DIR=$PWD
 
 mkdir -p $BASEDIR
 
 if [ -z $3 ]; then
-NVR=$(cbs latest-build --quiet cloud8-openstack-${RDO_RELEASE}-release $PKG|grep $PKG|awk '{print $1}')
+CBS_TAGS=$(cbs list-tags|grep ${RDO_RELEASE}-release)
+# By default, it will pick up the stream tag prefix.
+CBS_TAG=$(echo "$CBS_TAGS"|grep -e "^${CBS_TAG_PREFIX}s" || echo "$CBS_TAGS"|grep -e "^${CBS_TAG_PREFIX}")
+NVR=$(cbs latest-build --quiet ${CBS_TAG} $PKG|grep $PKG|awk '{print $1}')
 else
 NVR=$3
 fi
