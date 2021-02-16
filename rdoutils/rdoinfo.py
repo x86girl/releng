@@ -51,7 +51,8 @@ def get_project(project, info_files='rdo.yml', local_dir=local_info):
 
 
 def update_tag(tag_type, project, tag_key, tag_value,
-               info_files='rdo-full.yml', local_dir=local_info):
+               info_files='rdo-full.yml', local_dir=local_info,
+               tags_filename=None):
     """ Update tags or buildsys-tags in yaml files in rdoinfo with following
     convention:
 
@@ -67,6 +68,12 @@ def update_tag(tag_type, project, tag_key, tag_value,
                    'cloud7-openstack-rocky-testing',
                    'python-oslo-config-6.4.0-1.el7',
                     local_dir='/tmp/rdoinfo')
+        update_tag('buildsys-tags', 'openvswitch2.13',
+                   'nfv8-openvswitch-2-testing',
+                   'openvswitch2.13-2.13.0-79.el8',
+                    local_dir='/tmp/nfvinfo',
+                    tags_filename='openvswitch2.13.yml')
+
 
     """
     package = get_project(project, info_files=info_files,
@@ -79,7 +86,10 @@ def update_tag(tag_type, project, tag_key, tag_value,
     # we update tags.
     for tag in package[tag_type].keys():
         updated = False
-        tags_file = os.path.join(local_dir, tag_type, "%s.yml" % tag)
+        if tags_filename:
+            tags_file = os.path.join(local_dir, tags_filename)
+        else:
+            tags_file = os.path.join(local_dir, tag_type, "%s.yml" % tag)
         with open(tags_file, 'rb') as infile:
             tags_info = yaml.load(infile, Loader=yaml.RoundTripLoader)
         # if packages section is empty we can't iterate.
