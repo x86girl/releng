@@ -1,9 +1,11 @@
 import argparse
 import datetime
+import fileinput
 import os
 import re
 import rpm
 import shutil
+import sys
 import time
 
 from distroinfo import info
@@ -13,13 +15,14 @@ from rdoutils import review_utils
 from rdoutils import releases_utils
 from rdoutils import rdoinfo as rdoinfo_utils
 from rdoutils.rdoinfo import NotInRdoinfoRelease
-from sh import rdopkg
-from sh import spectool
+from sh import rdopkg, spectool
 
 from .utils import log_message
 
 rdoinfo_repo = ('https://raw.githubusercontent.com/'
                 'redhat-openstack/rdoinfo/master/')
+# From https://releases.openstack.org/#cryptographic-signatures
+current_pubkey_fingerprint = "5d2d1e4fb8d38e6af76c50d53d4fec30cf5ce3da"
 
 
 def parse_args():
@@ -149,6 +152,40 @@ def clone_distgit(package, release):
                                  (package, stable_branch))
 
 
+def is_string_in_file(file_name, string_to_search):
+    """ Check if any line in the file contains given string """
+    with open(file_name, 'r') as f:
+        for line in f:
+            if string_to_search in line:
+                return True
+    return False
+
+
+def replace(file, current_line, new_line):
+    """ Replace given line in the file by new line """
+    with fileinput.input(file, inplace=True) as f:
+        for line in f:
+            if current_line in line:
+                line = new_line
+            sys.stdout.write(line)
+
+
+def update_pubkey_fingerprint(package):
+    """ Update pubkey fingerprint in .spec file
+    This function aims to verify the pubkey fingerprint and update it if
+    possible.
+    """
+    spec_file = "{0}/{1}/{1}.spec".format(repodir, package)
+    current_line = "%global sources_gpg_sign 0x"
+    wanted_line = "%global sources_gpg_sign 0x{}\n".format(
+                  current_pubkey_fingerprint)
+    if not is_string_in_file(spec_file, wanted_line):
+        replace(spec_file, current_line, wanted_line)
+        return True
+    else:
+        return False
+
+
 def new_version(package, version, release, dry_run=True,
                 chglog_user=None, chglog_email=None):
     os.chdir("%s/%s" % (repodir, package))
@@ -161,6 +198,8 @@ def new_version(package, version, release, dry_run=True,
     if chglog_email:
         cmd = cmd + ['-e', chglog_email]
     new_vers = rdopkg(*cmd)
+    if update_pubkey_fingerprint(package):
+        git('commit', '-a', '--amend', '--no-edit')
     if not dry_run:
         git('review', '-t', '%s-update' % release)
     return new_vers
