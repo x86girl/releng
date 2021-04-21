@@ -4,6 +4,7 @@ This repo contains some utilities used in release management tasks in RDO projec
 
 Following executable are provided in this repository:
 
+- **check_dependants**: list of packages wich depends on a specific source package name
 - **new_releases**: list new releases tagged in OpenStack projects managed by release project
 - **rdo_project**: list projects in RDO for releases and check branches status
 - **reviews_rdo_project**: list existing reviews for projects in review.rdoproject.org
