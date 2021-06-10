@@ -59,6 +59,9 @@ def get_new_releases_review(review):
         new_release = get_release_info(new_release_f)
         if not new_release:
             continue
+        re_excludes = re.compile('.*-(eol|em)$')
+        if re.search(re_excludes, new_release['version']):
+            continue
         new_release['release'] = release
         parent_release_f = get_release_file(parent_rev, mod_file)
         if parent_release_f is None:
