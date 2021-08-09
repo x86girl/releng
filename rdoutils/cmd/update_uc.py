@@ -27,6 +27,11 @@ def parse_args():
 SOURCE_BRANCH = 'source-branch'
 UC = 'upper-constraints.txt'
 
+# Exceptions for rdoinfo project name != project in upper-constraints
+UC_EXCEPTIONS = {
+  "glance_store": "glance-store",
+}
+
 
 # filter for Oslo and clients
 def filter_oslo_clients(project):
@@ -85,8 +90,9 @@ def update_uc():
     RELEASES_PUPPET = info_rdo['package-configs']['rpmfactory-puppet']['tags']
     for pkg in info_rdo['packages']:
         project = pkg['project']
-        if project in uc_projects:
-            new_version = uc[project]
+        project_uc = UC_EXCEPTIONS.get(project, project)
+        if project_uc in uc_projects:
+            new_version = uc[project_uc]
             # "Setting %s to version %s" % (project, new_version)
             if 'tags' in pkg:
                 tags = pkg['tags']
@@ -122,7 +128,7 @@ def update_uc():
                       (project, new_version))
                 rdoinfo.update_tag('tags', project, release_tag, tag_value,
                                    local_dir=rdoinfo_dir)
-            uc_projects.remove(project)
+            uc_projects.remove(project_uc)
         else:
             # "%s not found in upper-constraints" % project
             pass
