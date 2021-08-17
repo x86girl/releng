@@ -96,10 +96,19 @@ def update_uc():
             # "Setting %s to version %s" % (project, new_version)
             if 'tags' in pkg:
                 tags = pkg['tags']
-                if 'version-locked' in tags or 'under-review' in tags:
-                    print("Not updating %s, it is version-locked or under"
-                          " review" % project)
+                if 'under-review' in tags:
+                    print("Not updating %s, it is under review" % project)
                     continue
+                if 'version-locked' in tags:
+                    if tags['version-locked'] is None:
+                        print("Not updating %s, it is version-locked for all"
+                              " release tags" % project)
+                        continue
+                    else:
+                        if release_tag in tags['version-locked']:
+                            print("Not updating %s, it is version-locked for"
+                                  " %s release tag" % (project, release_tag))
+                            continue
                 prev_version = tags.get(release_tag)
                 if prev_version:
                     prev_version = prev_version.get(SOURCE_BRANCH)
