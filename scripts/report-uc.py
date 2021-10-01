@@ -23,7 +23,7 @@ ARCH = 'x86_64'
 DEFAULT_RELEASE = 'master'
 DEFAULT_DISTRO = 'centos8'
 DEFAULT_KOJI_PROFILE = 'cbs'
-DEFAULT_PY_VERS = {'centos7': '2.7', 'centos8': '3.6',
+DEFAULT_PY_VERS = {'centos7': '2.7', 'centos8': '3.6', 'centos9': '3.9',
                    'rhel7': '2.7', 'rhel8': '3.6'}
 DISTROS = DEFAULT_PY_VERS.keys()
 DNF_CACHEDIR = '/tmp/_report_uc_cache_dir'
