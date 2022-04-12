@@ -22,7 +22,7 @@ from .utils import log_message
 rdoinfo_repo = ('https://raw.githubusercontent.com/'
                 'redhat-openstack/rdoinfo/master/')
 # From https://releases.openstack.org/#cryptographic-signatures
-current_pubkey_fingerprint = "01527a34f0d0080f8a5db8d6eb6c5df21b4b6363"
+current_pubkey_fingerprint = "a63ea142678138d1bb15f2e303bdfd64dd164087"
 
 
 def parse_args():
