@@ -52,7 +52,7 @@ def get_project(project, info_files='rdo.yml', local_dir=local_info):
 
 def update_tag(tag_type, project, tag_key, tag_value,
                info_files='rdo-full.yml', local_dir=local_info,
-               tags_filename=None):
+               tags_filename=None, update_all_files=True):
     """ Update tags or buildsys-tags in yaml files in rdoinfo with following
     convention:
 
@@ -85,6 +85,9 @@ def update_tag(tag_type, project, tag_key, tag_value,
     # properly the default tags from package configs the first time
     # we update tags.
     for tag in package[tag_type].keys():
+        if not update_all_files:
+            if tag != tag_key:
+                continue
         updated = False
         if tags_filename:
             tags_file = os.path.join(local_dir, tags_filename)
