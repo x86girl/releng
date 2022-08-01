@@ -60,28 +60,32 @@ def expand_report(report_df):
     # report["Commit"] = None
     report_df["Date of FTBFS"] = None
 
-    for project in report_df.index:
-        rpmbuild_log = "https://trunk.rdoproject.org/" \
-                       + report_df["Release"][project] + "/component/" \
-                       + report_df['Component'][project] + "/" \
-                       + report_df['Source Sha'][project][:2] + "/" \
-                       + report_df['Source Sha'][project][2:4] + "/" \
-                       + report_df['Source Sha'][project] + "_" \
-                       + report_df['Dist Sha'][project][:8] + "/rpmbuild.log"
+    report_df.reset_index(inplace=True)
 
-        ftbfs_date = pandas.to_datetime(report_df['Timestamp'][project],
+    for index in report_df.index:
+        rpmbuild_log = "https://trunk.rdoproject.org/" \
+                       + report_df["Release"][index] + "/component/" \
+                       + report_df['Component'][index] + "/" \
+                       + report_df['Source Sha'][index][:2] + "/" \
+                       + report_df['Source Sha'][index][2:4] + "/" \
+                       + report_df['Source Sha'][index] + "_" \
+                       + report_df['Dist Sha'][index][:8] + "/rpmbuild.log"
+
+        ftbfs_date = pandas.to_datetime(report_df['Timestamp'][index],
                                         unit='s')
-        ftbfs_review = find_ftbfs_reviews(project.split("-")[1],
+        ftbfs_review = find_ftbfs_reviews(report_df["Project"]
+                                          [index].split("-")[1],
                                           report_df["Release"]
-                                          [project].split("-")[1],
+                                          [index].split("-")[1],
                                           "open")
 
-        report_df.loc[project, "Logs"] = rpmbuild_log
-        report_df.loc[project, "Date of FTBFS"] = ftbfs_date
-        report_df.loc[project, "Review"] = ftbfs_review
+        report_df.loc[index, "Logs"] = rpmbuild_log
+        report_df.loc[index, "Date of FTBFS"] = ftbfs_date
+        report_df.loc[index, "Review"] = ftbfs_review
 
     report_df.drop(["Timestamp", "Source Sha", "Dist Sha"],
                    axis=1, inplace=True)
+    report_df.set_index("Project", inplace=True)
 
     return report_df
 

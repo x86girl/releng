@@ -49,13 +49,13 @@ def get_osp_releases_reviews(release,
     rev_url = ("%sproject:openstack/releases+file:deliverables+file:%s%s" %
                (rev_url, release, QUERY_PARMS))
     reviews = client.get(rev_url)
-    return(reviews)
+    return (reviews)
 
 
 def get_review(review):
     client = get_gerrit_client('osp')
     review = client.get("/changes/?q=%s%s" % (review, QUERY_PARMS))
-    return(review)
+    return (review)
 
 
 def get_reviews_project(client, project, **kwargs):

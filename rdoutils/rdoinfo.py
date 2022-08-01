@@ -47,7 +47,7 @@ def get_project(project, info_files='rdo.yml', local_dir=local_info):
     for package in all_packages:
         if package['project'] == project:
             return package
-    raise(NotInRdoinfo)
+    raise (NotInRdoinfo)
 
 
 def update_tag(tag_type, project, tag_key, tag_value,
