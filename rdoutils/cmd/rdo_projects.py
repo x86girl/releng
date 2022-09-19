@@ -38,8 +38,11 @@ def main():
     if dist_in_rel:
         if args.missing:
             cbs_tag = args.missing
-            projects_cbs = rdoinfo.get_projects_distgit(buildsys_tag=cbs_tag)
-            filtered_rel = list(set(dist_in_rel) - set(projects_cbs))
+            projects_tagged = rdoinfo.get_projects_distgit(
+                buildsys_tag=cbs_tag)
+            projects_not_tagged = list(set(dist_in_rel) - set(projects_tagged))
+            filtered_rel = list(
+                set(projects_not_tagged) & set(projects_gerrit))
         else:
             filtered_rel = list(set(projects_gerrit) & set(dist_in_rel))
     else:

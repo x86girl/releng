@@ -5,6 +5,7 @@ import ruamel.yaml as yaml
 
 from distroinfo import info
 from distroinfo import query
+from rdoutils import cbs_utils
 from rdopkg.utils import git
 from rdopkg import helpers
 
@@ -35,10 +36,16 @@ def get_projects(info_files='rdo.yml', local_dir=local_info,
     # If buildsys_tag is specified, it looks for packages with the specified
     # value in buildsys-tags dict.
     if buildsys_tag is not None:
-        for package in all_packages:
-            if ('buildsys-tags' in package.keys()
-                    and buildsys_tag in package['buildsys-tags'].keys()):
-                pkgs_tagged.append(package)
+        if 'candidate' in buildsys_tag:
+            tagged_pkg_names = cbs_utils.list_pkg_names_tagged_in(buildsys_tag)
+            for package in all_packages:
+                if (package['name'] in tagged_pkg_names):
+                    pkgs_tagged.append(package)
+        else:
+            for package in all_packages:
+                if ('buildsys-tags' in package.keys()
+                        and buildsys_tag in package['buildsys-tags'].keys()):
+                    pkgs_tagged.append(package)
     return pkgs_tagged
 
 

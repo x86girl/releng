@@ -18,7 +18,7 @@ Directory `scripts` contains some bash scripts used for common tasks.
 1. Install requirements listed in requirements.txt, see notes about binary requirements
 2. Clone rdoinfo into ~/rdoinfo directory
 3. Copy ssh private key used in review.rdoproject.org under ~/.ssh/
-4. Configure .gitconfig to use the desired user when creating reviews (rdo_release_review) 
+4. Configure .gitconfig to use the desired user when creating reviews (rdo_release_review)
 5. ssh review.rdoproject.org to add server key to known_hosts
 
 **Not about using virtualenv:** rpm python module is not delivered via pypi so, if you plan
@@ -29,19 +29,43 @@ the virtualenv to use rpm module from the system.
 
 **rdo_release_review**
 -  To see available options for running the script, run:-
+```
    rdo_release_review --help
+```
 
 -  To run rdo_release_review against a upstream change, run:-
+```
    # Replace <...> in below commands with a valid full or short commit hash, change-id or review id
    rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n <reference review> --dry-run
    # For strict search for a commit or change-id, run:-
    rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n commit:<commit-id> --dry-run
    rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r newton -n change:<change-id> --dry-run
+```
 
 -  To run rdo_release_review against rdoinfo pin, run:-
+```
    rdo_release_review -u rdo-trunk -c RDO -e dev@lists.rdoproject.org -r pike -p /home/$USER/rdoinfo --dry-run
+```
 
 -  Don't pass --dry-run if you want the script to send reviews to https://review.rdoproject.org
+
+**rdo_projects**
+-  To see available options for running the script, run:-
+```
+   rdo_projects --help
+```
+
+- To list distgit projects which are available in `<release>`, but are **NOT** yet branched (i.e `<release>-rdo`), run:-
+```
+  rdo_projects -r zed -n zed-rdo
+```
+
+- To list distgit projects which have the `<release>-rdo` branch, but are not yet tag in CBS `cloud*-openstack-<release>-candidate` tag, run:-
+```
+  rdo_projects -r zed -b zed-rdo -m cloud9s-openstack-zed-candidate
+  # Note: this is useful when preparing new RDO release, you can spot the projects that are branched but do not have a build tagged yet.
+```
+
 
 ## TODO
 
