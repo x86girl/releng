@@ -1,0 +1,8 @@
+# releases
+PENULTIMATE_RELEASE=xena
+LATEST_RELEASE=yoga
+MASTER_RELEASE=zed
+NEXT_RELEASE=antelope
+
+# repo urls
+RDOINFO_GIT_URL="https://github.com/redhat-openstack/rdoinfo.git"
