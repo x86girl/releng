@@ -63,9 +63,11 @@ def expand_report(report_df):
     report_df.reset_index(inplace=True)
 
     for index in report_df.index:
+        component = report_df["Release"][index]
+        if "centos7-train" not in component:
+            component + "/component/" + report_df['Component'][index]
         rpmbuild_log = "https://trunk.rdoproject.org/" \
-                       + report_df["Release"][index] + "/component/" \
-                       + report_df['Component'][index] + "/" \
+                       + component + "/" \
                        + report_df['Source Sha'][index][:2] + "/" \
                        + report_df['Source Sha'][index][2:4] + "/" \
                        + report_df['Source Sha'][index] + "_" \
