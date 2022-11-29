@@ -19,7 +19,7 @@ QUERY_PARMS = "&o=CURRENT_REVISION&o=ALL_FILES&o=CURRENT_COMMIT"
 
 
 def get_gerrit_client(url, user=None, password=None):
-    if GERRIT_URLS[url]:
+    if url in GERRIT_URLS.keys():
         gerrit_url = GERRIT_URLS[url]
     elif validators.url(url):
         gerrit_url = url
