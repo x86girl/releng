@@ -58,6 +58,7 @@ def filter_all_minus_tripleo(project):
         'paunch',
         'directord',
         'task-core',
+        'tripleo-ansible',
     ]
     return project not in TRIPLEO_PROJECTS
 
