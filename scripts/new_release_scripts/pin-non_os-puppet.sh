@@ -44,7 +44,7 @@ source $VIRTUAL_ENV/bin/activate >/dev/null
 echo -e "Installing required modules in virtualenv..."
 python -m pip install --upgrade pip >/dev/null
 pip install distroinfo >/dev/null
-pip install $DIRNAME/../.. >/dev/null
+pip install git+https://github.com/rdo-infra/releng >/dev/null
 echo -e "Creating of virtualenv OK"
 
 grep ^puppet $VERSIONS_FILE |awk -F, '{print $1 " "$2 "  " $3}'|while read pkg repo commit
