@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Script to cross-tag CBS builds
+#
+# example:
+#       cross_tag build_name src_release dst_release
+#
+
+if [ $# -ne 3 ]; then
+    echo "ERROR: syntax error."
+    echo "     usage: cross_tag build_name src_release dst_release"
+    echo "Exemple:"
+    echo "            cross_tag python-oslo-db zed antelope"
+    exit 1
+fi
+
+build_name=$1
+src_release=$2
+dst_release=$3
+
+
+cbs_tags=$(cbs list-tags 2>/dev/null | grep cloud9s-openstack)
+rels=( $src_release $dst_release )
+for rel in "${rels[@]}"
+do
+    if ! echo "$cbs_tags" | grep -q -e "cloud9s-openstack-$rel-release"; then
+        echo "Error: $rel doesn't seem to be a known release"
+        echo "       the tag cloud9s-openstack-$rel-release does not exist in CBS"
+        exit 1
+    fi
+done
+
+pkg_info=$(rdopkg findpkg $1)
+src_build=$(echo "$pkg_info" | grep -e "cloud9s-openstack-$src_release-release" | awk '{print $2}')
+if ! echo $src_build | grep -q -e "^$build_name"; then
+    echo "Error when finding build in SRC tag"
+    exit 1
+fi
+
+if cbs list-tagged cloud9s-openstack-$dst_release-candidate | grep -q -e $src_build; then
+    echo "The build '$src_build' is already in cbs tag 'cloud9s-openstack-$dst_release-candidate'"
+    exit 0
+fi
+
+echo "The commands below will be run:"
+CMD_1="cbs add-pkg cloud9s-openstack-$dst_release-candidate --owner rdobuilder $build_name"
+CMD_2="cbs tag-build cloud9s-openstack-$dst_release-candidate $src_build"
+echo $CMD_1
+echo $CMD_2
+
+read -p "Are you sure? Press Y/y to confirm:" -n 1 -r
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    echo $CMD_1
+    $CMD_1
+    echo $CMD_2
+    $CMD_2
+fi
