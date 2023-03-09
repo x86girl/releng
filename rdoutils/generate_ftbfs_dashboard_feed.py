@@ -128,8 +128,8 @@ def main():
         releases = ["centos7-train", "centos8-train", "centos8-ussuri",
                     "centos8-victoria", "centos8-wallaby", "centos8-xena",
                     "centos8-yoga", "centos9-wallaby", "centos9-xena",
-                    "centos9-yoga", "centos9-zed", "centos9-master",
-                    "centos9-master-head"]
+                    "centos9-yoga", "centos9-zed", "centos9-antelope",
+                    "centos9-master", "centos9-master-head"]
     else:
         releases = args.release
 
