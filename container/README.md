@@ -10,12 +10,12 @@ It's served at https://quay.io/repository/rdoinfra/rdo-toolbox
 You must have [toolbox](https://github.com/containers/toolbox) package installed as prerequisite
 
 ```
-podman pull quay.io/rdoinfra/rdo-toolbox
+podman pull quay.io/rdoinfra/rdo-toolbox:latest
 # or
-docker pull quay.io/rdoinfra/rdo-toolbox
+docker pull quay.io/rdoinfra/rdo-toolbox:latest
 
-toolbox create -i quay.io/rdoinfra/rdo-toolbox
-toolbox enter rdo-toolbox
+toolbox create -i quay.io/rdoinfra/rdo-toolbox:latest
+toolbox enter rdo-toolbox-latest
 ```
 
 # How to build it locally

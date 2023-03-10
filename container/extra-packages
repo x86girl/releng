@@ -4,6 +4,7 @@ createrepo
 entr
 fedpkg
 gcc
+git-delta
 glibc-langpack-en
 httpd
 jq
