@@ -7,31 +7,30 @@ PKG=$1
 BASEDIR=$2
 
 # Adjust as needed
-FEDUSER=amoralej
-FEDORA_RELEASE=34
-RDO_RELEASE=victoria
-CHANGELOG_NAME="Alfredo Moralejo"
-CHANGELOG_MAIL=amoralej@redhat.com
-#
+FEDUSER=
+# the number should be current rawhide
+FEDORA_RELEASE=
+RDO_RELEASE=
+# name and mail used to create changelog entry
+CHANGELOG_NAME=
+CHANGELOG_MAIL=
 
 FEDORA_TAG=f${FEDORA_RELEASE}
 FEDORA_DIST=fc${FEDORA_RELEASE}
-CBS_TAG_PREFIX="cloud8"
+CBS_TAG_PREFIX="cloud9s"
 
 INITIAL_DIR=$PWD
 
 mkdir -p $BASEDIR
 
 if [ -z $3 ]; then
-CBS_TAGS=$(cbs list-tags|grep ${RDO_RELEASE}-release)
-# By default, it will pick up the stream tag prefix.
-CBS_TAG=$(echo "$CBS_TAGS"|grep -e "^${CBS_TAG_PREFIX}s" || echo "$CBS_TAGS"|grep -e "^${CBS_TAG_PREFIX}")
-NVR=$(cbs latest-build --quiet ${CBS_TAG} $PKG|grep $PKG|awk '{print $1}')
+  CBS_TAG=${CBS_TAG_PREFIX}-openstack-${RDO_RELEASE}-release
+  NVR=$(cbs latest-build --quiet ${CBS_TAG} $PKG | grep $PKG | awk '{print $1}')
 else
-NVR=$3
+  NVR=$3
 fi
 
-NVR_FED=$(koji latest-build --quiet ${FEDORA_TAG} $PKG|grep $PKG|awk '{print $1}')
+NVR_FED=$(koji latest-build --quiet ${FEDORA_TAG} $PKG | grep $PKG | awk '{print $1}')
 
 echo $NVR $NVR_FED
 
@@ -82,10 +81,10 @@ function rebuild_srpm(){
 function scratch_build(){
   PKGNAME=$1
   PKGNVR=$2
-  koji build --wait --scratch $FEDORA_TAG $BASEDIR/$PKGNAME/rpmbuild/SRPMS/*src.rpm|tee $BASEDIR/$NVR.out
-  TASKID=$(grep buildArch $BASEDIR/${NVR}.out|head -1|awk '{print $1}')
+  koji build --wait --scratch $FEDORA_TAG $BASEDIR/$PKGNAME/rpmbuild/SRPMS/*src.rpm | tee $BASEDIR/$NVR.out
+  TASKID=$(grep buildArch $BASEDIR/${NVR}.out | head -1 | awk '{print $1}')
   tail -1 $BASEDIR/${NVR}.out >> $BASEDIR/results.out
-  koji taskinfo $TASKID|grep rpm$ >> $BASEDIR/generated_packages.txt
+  koji taskinfo $TASKID | grep rpm$ >> $BASEDIR/generated_packages.txt
 }
 
 function rebuild_package(){
@@ -119,10 +118,9 @@ if [ ! -z $NVR ]; then
   prepare_spec $PKG $NVR
   rebuild_srpm $PKG $NVR
   scratch_build $PKG $NVR
-  tail -1 $BASEDIR/${NVR}.out|grep -q completed
+  tail -1 $BASEDIR/${NVR}.out | grep -q completed
   if [ $? -eq 0 ];then
      rebuild_package $PKG $NVR
   fi
   popd
 fi
-

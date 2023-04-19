@@ -9,16 +9,16 @@ Process to update fedora clients in fedora from a RDO release
 - spectool
 - centos-packager
 
-1. Get the list of OpenStack packages manage in RDO which are in a Fedora release:
+1. Get the list of OpenStack packages manage in RDO which are in a Fedora Rawhide release:
 
-bash ./list_openstack_packages.sh train f32 |tee all_packages.txt
+bash ./list_openstack_packages.sh antelope f39 |tee all_packages.txt
 
 2. Check the packages that need to be updated in fedora. Example to check packages in
-Fedora 32 from RDO Train:
+Fedora 39 from RDO Antelope:
 
 cat all_packages.txt|while read pkg
 do
-  bash ./check_fedora_sync.sh $pkg 32 train
+  bash ./check_fedora_sync.sh $pkg 39 antelope
 done
 
 3. Update packages in fedora distgit, push and build them (it first tries a scratch build)
@@ -38,4 +38,3 @@ cat all_packages.txt|while read pkg
 do
   bash ./sync_fedora_from_rdo.sh $pkg /tmp/fedora_update
 done
-
