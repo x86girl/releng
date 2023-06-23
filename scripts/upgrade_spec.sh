@@ -41,6 +41,7 @@ function help(){
   echo "--protect-reqs-txt - remove all modification on requirements.txt file"
   echo "--replace-macros - replace depracated macros"
   echo "--add-check - Add %check section with tox testing if it does not exist"
+  echo "--add-exclude-reqs - Add macros to manually add runtime reqs that needs to be excluded"
   echo "--all or -a - perform all operation but add-check"
 
   exit 0
@@ -196,13 +197,27 @@ sed -i '/^requires.*virtualenv.*/d' tox.ini'
     sed -i "/%{!?upstream_version/a # we are excluding some BRs from automatic generator\n\
 %global excluded_brs doc8 bandit pre-commit hacking flake8-import-order" "$SPEC_FILE"
     sed -i "/^%build/i # Exclude some bad-known BRs\nfor pkg in %{excluded_brs};do\n\
-sed -i "/^\${pkg}.*/d" doc/requirements.txt\n\
-sed -i "/^\${pkg}.*/d" test-requirements.txt\ndone" "$SPEC_FILE"
+  for reqfile in doc/requirements.txt test-requirements.txt; do\n\
+    if [ -f \$reqfile ]; then\n\
+      sed -i "/^\${pkg}.*/d" \$reqfile\n\
+    fi\n\  done\n\done\n" "$SPEC_FILE"
   fi
+}
+
+function add_exclude_reqs {
+
+  if ! grep -q excluded_reqs  "$SPEC_FILE"; then
+    sed -i "/%{!?upstream_version/a # we are excluding some runtime reqs from automatic generator\n\
+%global excluded_reqs <add excluded list here>" "$SPEC_FILE"
+    sed -i "/^%generate_buildrequires/i # Exclude some bad-known runtime reqs\nfor pkg in %{excluded_reqs};do\n\
+  sed -i "/^\${pkg}.*/d" requirements.txt\nfi\n" "$SPEC_FILE"
+  fi
+
 }
 
 function fix_check_phase {
   sed -i '/^#/! s/.*stestr.*run.*/%tox -e %{default_toxenv}/g' "$SPEC_FILE"
+  sed -i '/^#/! s/.*setup.py.*test.*/%tox -e %{default_toxenv}/g' "$SPEC_FILE"
 }
 
 function add_check_phase {
@@ -290,6 +305,11 @@ case "$1" in
 
   --add-check)
     add_check_phase
+
+    ;;
+
+  --add-exclude-reqs)
+    add_exclude_reqs
 
     ;;
 
