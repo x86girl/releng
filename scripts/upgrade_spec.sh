@@ -123,7 +123,7 @@ function remove_brequires {
   done <<< $matched_lines
 
   # replace new lines after matching
-  sed -i '/^BuildRequires:.*python3-devel/! s/^BuildRequires:.*python.*/TEMPREMOVE/' $SPEC_FILE
+  sed -i '/^BuildRequires:.*python3-devel/!{/-tests$/! s/^BuildRequires:.*python.*/TEMPREMOVE/g;}' $SPEC_FILE
 }
 
 
