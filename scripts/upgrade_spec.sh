@@ -187,8 +187,9 @@ function protect_reqs_txt {
 
 
 function adjust_prep {
-  if ! grep -q env:TOX_CONSTRAINTS_FILE "$SPEC_FILE"; then
-    sed_expr='sed -i '/.*-c{env:TOX_CONSTRAINTS_FILE.*/d' tox.ini\
+  if ! grep -q env:.*_CONSTRAINTS_FILE "$SPEC_FILE"; then
+    sed_expr='sed -i '/^[[:space:]]*-c{env:.*_CONSTRAINTS_FILE.*/d' tox.ini\
+sed -i "s/^deps = -c{env:.*_CONSTRAINTS_FILE.*/deps =/" tox.ini\
 sed -i '/^minversion.*/d' tox.ini\
 sed -i '/^requires.*virtualenv.*/d' tox.ini'
     sed -i "/^%build/i $sed_expr\n" "$SPEC_FILE"
