@@ -233,6 +233,17 @@ function add_exclude_reqs {
 function fix_check_phase {
   sed -i '/^#/! s/.*stestr.*run.*/%tox -e %{default_toxenv}/g' "$SPEC_FILE"
   sed -i '/^#/! s/.*setup.py.*test.*/%tox -e %{default_toxenv}/g' "$SPEC_FILE"
+
+  local pattern="^%tox -e %{default_toxenv}$"
+  rm_line=$(grep -n "$pattern" "$SPEC_FILE" | cut -f1 -d":")
+  if [ -n "$rm_line" ]; then
+    check_phase_line=$(grep -n "^%check" "$SPEC_FILE" | cut -f1 -d":")
+    if [ ! -n "$check_phase_line" ]; then
+      check_phase_line="$(( rm_line - 3 ))"
+    fi
+    sed -i "$check_phase_line,$(( rm_line - 1 )){/^export PYTHONPATH.*/d;}" "$SPEC_FILE"
+    sed -i "$check_phase_line,$(( rm_line - 1 )){/^export PATH.*/d;}" "$SPEC_FILE"
+  fi
 }
 
 function add_check_phase {
