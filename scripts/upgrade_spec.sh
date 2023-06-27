@@ -211,7 +211,7 @@ function add_exclude_reqs {
     sed -i "/%{!?upstream_version/a # we are excluding some runtime reqs from automatic generator\n\
 %global excluded_reqs <add excluded list here>" "$SPEC_FILE"
     sed -i "/^%generate_buildrequires/i # Exclude some bad-known runtime reqs\nfor pkg in %{excluded_reqs};do\n\
-  sed -i "/^\${pkg}.*/d" requirements.txt\nfi\n" "$SPEC_FILE"
+  sed -i "/^\${pkg}.*/d" requirements.txt\ndone\n" "$SPEC_FILE"
   fi
 
 }
