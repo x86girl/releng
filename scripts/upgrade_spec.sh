@@ -255,6 +255,7 @@ function add_check_phase {
 
 function fix_egginfo {
   sed -i '/^%{python3_sitelib}/ s/egg-info/dist-info/g' "$SPEC_FILE"
+  sed -i '/^%{python3_sitelib}/ s/-py%{python3_version}//g' "$SPEC_FILE"
 }
 
 function fix_translations {
