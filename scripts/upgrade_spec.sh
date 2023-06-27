@@ -37,6 +37,7 @@ function help(){
   echo "--fix-license - to fix license format"
   echo "--remove-requires - to clean all hardcoded run-time reqs"
   echo "--remove-brequires - to clean all hardcoded build reqs"
+  echo "--remove-bundled-egg-info - to clean the removal of bundled egg-info"
   echo "--add-macros - add pyproject-rpm-macros BR and generator"
   echo "--protect-reqs-txt - remove all modification on requirements.txt file"
   echo "--replace-macros - replace depracated macros"
@@ -186,6 +187,19 @@ function protect_reqs_txt {
 }
 
 
+function remove_bundled_egg_info_removal {
+  local pattern="^rm.*egg-info"
+  if grep -q "$pattern" "$SPEC_FILE"; then
+    rm_line=$(grep -n "$pattern" "$SPEC_FILE" | cut -f1 -d":")
+    sed -i "$(( rm_line - 1 )){/^#.*/d;}" "$SPEC_FILE"
+    sed -i "/$pattern/d" "$SPEC_FILE"
+  else
+    echo "No bundled egg-info removal attempts found."
+    return 0
+  fi
+}
+
+
 function adjust_prep {
   if ! grep -q env:.*_CONSTRAINTS_FILE "$SPEC_FILE"; then
     sed_expr='sed -i '/^[[:space:]]*-c{env:.*_CONSTRAINTS_FILE.*/d' tox.ini\
@@ -287,6 +301,10 @@ case "$1" in
     remove_brequires
     ;;
 
+  --remove-bundled-egg-info)
+    remove_bundled_egg_info_removal
+    ;;
+
   --add-macros)
     add_pyproject_macros
     ;;
@@ -328,6 +346,7 @@ case "$1" in
     fix_egginfo
     fix_translations
     final_cleanup
+    remove_bundled_egg_info_removal
     ;;
 
   *)
