@@ -24,10 +24,6 @@ SPEC_FILE="$2"
 # [1] https://fedoraproject.org/wiki/Changes/SPDX_Licenses_Phase_1
 
 
-# TODO:
-# - fix review comments
-# - What to do with Requirements under %tests
-# (check if works)
 
 function help(){
   echo "Usage: `basename $0` [phase] SPEC_FILE"
@@ -161,8 +157,8 @@ function replace_depracated_macros {
   sed -i -E "s/%\{?py3_build\}?.*/%pyproject_wheel/g" "$SPEC_FILE"
   sed -i -E "s/%\{?py3_install\{?.*/%pyproject_install/g" "$SPEC_FILE"
   sed -i '/.*python_provide.*/d' "$SPEC_FILE"
-
 }
+
 
 function replace_sphinx_build {
   sed -i '/^#/! s/.*sphinx-build.*html.*/%tox -e docs/g' "$SPEC_FILE"
@@ -211,7 +207,8 @@ sed -i '/^requires.*virtualenv.*/d' tox.ini'
   if ! grep -q excluded_brs  "$SPEC_FILE"; then
     sed -i "/%{!?upstream_version/a # we are excluding some BRs from automatic generator\n\
 %global excluded_brs doc8 bandit pre-commit hacking flake8-import-order" "$SPEC_FILE"
-    sed -i "/^%build/i # Exclude some bad-known BRs\nfor pkg in %{excluded_brs};do\n\
+
+    sed -i "/^%build/i # Exclude some bad-known BRs\nfor pkg in %{excluded_brs}; do\n\
   for reqfile in doc/requirements.txt test-requirements.txt; do\n\
     if [ -f \$reqfile ]; then\n\
       sed -i "/^\${pkg}.*/d" \$reqfile\n\
@@ -219,16 +216,17 @@ sed -i '/^requires.*virtualenv.*/d' tox.ini'
   fi
 }
 
+
 function add_exclude_reqs {
 
   if ! grep -q excluded_reqs  "$SPEC_FILE"; then
     sed -i "/%{!?upstream_version/a # we are excluding some runtime reqs from automatic generator\n\
 %global excluded_reqs <add excluded list here>" "$SPEC_FILE"
-    sed -i "/^%generate_buildrequires/i # Exclude some bad-known runtime reqs\nfor pkg in %{excluded_reqs};do\n\
+    sed -i "/^%generate_buildrequires/i # Exclude some bad-known runtime reqs\nfor pkg in %{excluded_reqs}; do\n\
   sed -i "/^\${pkg}.*/d" requirements.txt\ndone\n" "$SPEC_FILE"
   fi
-
 }
+
 
 function fix_check_phase {
   sed -i '/^#/! s/.*stestr.*run.*/%tox -e %{default_toxenv}/g' "$SPEC_FILE"
@@ -246,6 +244,7 @@ function fix_check_phase {
   fi
 }
 
+
 function add_check_phase {
   # note this is not in --all, needs --add-check
   if ! grep -q ^%check "$SPEC_FILE" ;then
@@ -253,10 +252,12 @@ function add_check_phase {
   fi
 }
 
+
 function fix_egginfo {
   sed -i '/^%{python3_sitelib}/ s/egg-info/dist-info/g' "$SPEC_FILE"
   sed -i '/^%{python3_sitelib}/ s/-py%{python3_version}//g' "$SPEC_FILE"
 }
+
 
 function fix_translations {
 
@@ -275,6 +276,7 @@ function fix_translations {
   fi
 }
 
+
 function show_warnings {
  for warn in repo_bootstrap '%{rhosp}'
  do
@@ -282,8 +284,42 @@ function show_warnings {
      echo "WARNING: This spec uses $warn . It may require manual modifications"
    fi
  done
-
 }
+
+
+function fix_doc {
+  if grep -q "tox -e docs" $SPEC_FILE || grep -q "sphinx-build" $SPEC_FILE || grep -q "build_sphinx" $SPEC_FILE; then
+    is_doc_command=true
+  else
+    is_doc_command=false
+  fi
+
+  if grep -q "with_doc" $SPEC_FILE; then
+    is_with_doc=true
+  else
+    is_with_doc=false
+  fi
+
+  if [ $is_doc_command = false ]; then
+    if grep -q "%global excluded_brs" "$SPEC_FILE"; then
+      sed -i '/%global excluded_brs/ s/$/ sphinx openstackdocstheme/' "$SPEC_FILE"
+    else
+      echo 'No "%global excluded_brs" found. Run step "--adjust-prep" first.'
+    fi
+  elif [ $is_doc_command = true ] && [ $is_with_doc = true ]; then
+    if grep -q "%global excluded_brs" "$SPEC_FILE"; then
+      sed -i "/%global excluded_brs/a# Exclude sphinx from BRs if docs are disabled\n\
+%if ! 0%{?with_doc}\n\
+%global excluded_brs %{excluded_brs} sphinx openstackdocstheme\n\
+%endif" "$SPEC_FILE"
+    else
+      echo 'No "%global excluded_brs" found. Run step "--adjust-prep" first.'
+    fi
+  else
+    echo "No documentation requirements changes needed."
+  fi
+}
+
 
 function final_cleanup {
   # Remove the empty lines created in previous step
@@ -291,7 +327,6 @@ function final_cleanup {
     sed -i "/TEMPREMOVE/d" "$SPEC_FILE"
   fi
 }
-
 
 #### MAIN ###
 
@@ -331,17 +366,18 @@ case "$1" in
 
   --adjust-prep)
     adjust_prep
-
     ;;
 
   --add-check)
     add_check_phase
-
     ;;
 
   --add-exclude-reqs)
     add_exclude_reqs
+    ;;
 
+  --fix-doc)
+    fix_doc
     ;;
 
   --all|-a)
@@ -359,6 +395,7 @@ case "$1" in
     fix_translations
     final_cleanup
     remove_bundled_egg_info_removal
+    fix_doc
     ;;
 
   *)
