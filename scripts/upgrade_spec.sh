@@ -19,6 +19,7 @@ SPEC_FILE="$2"
 # 7. move the locale translations to %install
 # 8. replace sphinx_build by %tox
 # 9. can add a %check section if it does not exist.
+# 10. remove the old Python2 Obsoletes
 #
 
 # [1] https://fedoraproject.org/wiki/Changes/SPDX_Licenses_Phase_1
@@ -39,6 +40,7 @@ function help(){
   echo "--replace-macros - replace depracated macros"
   echo "--add-check - Add %check section with tox testing if it does not exist"
   echo "--add-exclude-reqs - Add macros to manually add runtime reqs that needs to be excluded"
+  echo "--remove-py2-obsoletes - Remove the Obsoletes on py2 packages"
   echo "--all or -a - perform all operation but add-check"
 
   exit 0
@@ -328,6 +330,11 @@ function final_cleanup {
   fi
 }
 
+
+function remove_py2_obsoletes {
+  sed -i "/Obsoletes:.*python2/d" "$SPEC_FILE"
+}
+
 #### MAIN ###
 
 case "$1" in
@@ -380,6 +387,10 @@ case "$1" in
     fix_doc
     ;;
 
+  --remove-py2-obsoletes)
+    remove_py2_obsoletes
+    ;;
+
   --all|-a)
     show_warnings
     make_license_SPDX
@@ -396,6 +407,7 @@ case "$1" in
     final_cleanup
     remove_bundled_egg_info_removal
     fix_doc
+    remove_py2_obsoletes
     ;;
 
   *)
