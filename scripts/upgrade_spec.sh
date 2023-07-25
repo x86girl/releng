@@ -32,8 +32,8 @@ function help(){
 
   echo
   echo "--fix-license - to fix license format"
-  echo "--remove-requires - to clean all hardcoded run-time reqs"
-  echo "--remove-brequires - to clean all hardcoded build reqs"
+  echo "--remove-req - to clean all hardcoded run-time reqs"
+  echo "--remove-breq - to clean all hardcoded build reqs"
   echo "--remove-bundled-egg-info - to clean the removal of bundled egg-info"
   echo "--add-macros - add pyproject-rpm-macros BR and generator"
   echo "--protect-reqs-txt - remove all modification on requirements.txt file"
@@ -79,14 +79,15 @@ function make_license_SPDX {
 
 function remove_requires {
 
-  if ! grep -q "^Requires" "$SPEC_FILE" ; then
+  python_requires_regexp="^Requires:(?!.*%{version}-%{release}.*).*python.*"
+  if ! grep -q -P "$python_requires_regexp" "$SPEC_FILE" ; then
     echo "No run-time requirements to remove found."
     return 0
   fi
   # list of number of lines containing Requires: python but not those containing
   # %{version}-%{release} pattern as that usually means that are dependencies on
   # subpackages of the same srpm.
-  matched_lines=$(grep -n -P '^Requires:(?!.*%{version}-%{release}.*).*python.*' "$SPEC_FILE" | cut -f1 -d":")
+  matched_lines=$(grep -n -P "$python_requires_regexp" "$SPEC_FILE" | cut -f1 -d":")
   while IFS= read -r line; do
     # for 3 lines before or after matched line, replace line started
     # with "#" with newline
