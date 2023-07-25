@@ -209,7 +209,7 @@ sed -i '/^requires.*virtualenv.*/d' tox.ini'
   fi
   if ! grep -q excluded_brs  "$SPEC_FILE"; then
     sed -i "/%{!?upstream_version/a # we are excluding some BRs from automatic generator\n\
-%global excluded_brs doc8 bandit pre-commit hacking flake8-import-order" "$SPEC_FILE"
+%global excluded_brs doc8 bandit pre-commit hacking flake8-import-order bashate" "$SPEC_FILE"
 
     sed -i "/^%build/i # Exclude some bad-known BRs\nfor pkg in %{excluded_brs}; do\n\
   for reqfile in doc/requirements.txt test-requirements.txt; do\n\
