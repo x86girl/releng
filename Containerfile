@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:37
+FROM registry.fedoraproject.org/fedora:38
 LABEL name="rdo-toolbox"
 
 COPY container/extra-packages /extra-packages
