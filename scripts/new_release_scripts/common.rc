@@ -1,8 +1,8 @@
 # releases
-PENULTIMATE_RELEASE=yoga
-LATEST_RELEASE=zed
-MASTER_RELEASE=antelope
-NEXT_RELEASE=bobcat
+PENULTIMATE_RELEASE=zed
+LATEST_RELEASE=antelope
+MASTER_RELEASE=bobcat
+NEXT_RELEASE=caracal
 
 # repo urls
 RDOINFO_GIT_URL="https://github.com/redhat-openstack/rdoinfo.git"
