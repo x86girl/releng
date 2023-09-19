@@ -10,7 +10,7 @@ RSRC_REPO_URL="https://review.rdoproject.org/r/$RSRC_REPO_NAME"
 RSRC_DIR="$WORKDIR/$RSRC_REPO_NAME"
 
 MASTER_RELEASE=$(rdopkg info | grep -e "in development phase" | awk '{print $1}')
-LATEST_RELEASE=$(rdopkg info | grep -e "in maintained phase" | sort -r | awk '{print $1}' | head -n 1)
+LATEST_RELEASE=$(rdopkg info | grep -e "in maintained phase" | awk '{print $1}' | head -n 1)
 
 
 function help(){
@@ -20,8 +20,8 @@ function help(){
     set of projects. To describe which set of project, you would
     like to branch, use following arguments:"
     echo
-    echo "--phase1 - to branch clients and libs"
-    echo "--phase2 - to branch cores"
+    echo "--libs-clients - to branch clients and libs"
+    echo "--cores - to branch cores"
     echo "*file* - to branch own list of projects from specified file
     i.e. `basename $0` /tmp/branching_list"
     echo
@@ -47,23 +47,10 @@ function prepare_rsrc_repo(){
 
 
 function generate_project_list(){
-    BRANCHED_PROJECTS_FILE="$WORKDIR/$1"_branching_list
-    if [[ "$1" =~ "phase2" ]]; then
-        # FIXME: those are projects, which are now marked as component:tripleo,
-        # what are going to be change after tripleo cleanup:
-        # https://review.rdoproject.org/etherpad/p/post-tripleo-proposal
-        additional_project="openstack-heat
-openstack-heat-agents
-openstack-kolla
-openstack-mistral
-openstack-zaqar
-os-apply-config
-os-collect-config
-os-net-config
-os-refresh-config"
+    if [[ "$1" =~ "--cores" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
 
-        PROJECT_LIST="$(rdopkg info conf:core tags:antelope component:~tripleo name:~tripleo | grep "name: " | sort | sed 's/name: //g')"
-        PROJECT_LIST+="$additional_project"
+        PROJECT_LIST="$(rdopkg info -t $MASTER_RELEASE-uc conf:core tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
         echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
         echo "$PROJECT_LIST" > "$BRANCHED_PROJECTS_FILE"
 
@@ -75,7 +62,6 @@ os-refresh-config"
         # adjust project names
         sed -i 's/gnocchi/openstack-gnocchi/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/python-sahara/sahara/' "$BRANCHED_PROJECTS_FILE"
-        sed -i 's/python-django-horizon/openstack-django_openstack_auth/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/manila-dashboard/manila-ui/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/magnum-dashboard/magnum-ui/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/ironic-dashboard/ironic-ui/' "$BRANCHED_PROJECTS_FILE"
@@ -101,6 +87,10 @@ function branching(){
         if [ ! -n "$resource_file" ] && [[ "$project" =~ "ui" ]]; then
             project_dshb=${project/ui/dashboard}
             resource_file=$(find "$RSRC_DIR" -name *"$project_dshb.yaml")
+        fi
+        if [ ! -n "$resource_file" ] && [[ "$project" =~ "python-django-horizon" ]]; then
+            project="openstack-horizon"
+            resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
         fi
 
         echo "Resource file: $resource_file for project $project"
