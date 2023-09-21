@@ -64,6 +64,7 @@ if [ $TAG == $LAST_VERSION ]; then
 fi
 
 rdopkg new-version -U -b $TAG -u RDO -e dev@lists.rdoproject.org -t -d
+bash $DIRNAME/edit_source_gpg_sign && git commit -a --amend --no-edit
 
 echo "Press 2 key to submit review to Gerrit:"
 read -n 2
