@@ -22,6 +22,7 @@ function help(){
     echo
     echo "--libs-clients - to branch clients and libs"
     echo "--cores - to branch cores"
+    echo "--tempest - to branch tempest plugins"
     echo "*file* - to branch own list of projects from specified file
     i.e. `basename $0` /tmp/branching_list"
     echo
@@ -65,6 +66,11 @@ function generate_project_list(){
         sed -i 's/manila-dashboard/manila-ui/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/magnum-dashboard/magnum-ui/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/ironic-dashboard/ironic-ui/' "$BRANCHED_PROJECTS_FILE"
+    elif [[ "$1" =~ "--tempest" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
+        PROJECT_LIST="$(rdopkg info -t $MASTER_RELEASE-uc conf:tempest tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
+        echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
+        echo "$PROJECT_LIST" > "$BRANCHED_PROJECTS_FILE"
     else
             # anditional projects to branch can be specified in file
             BRANCHED_PROJECTS_FILE="$1"
@@ -82,7 +88,7 @@ function branching(){
     echo
 
     cat "$BRANCHED_PROJECTS_FILE" | while IFS= read -r project ; do
-        echo "Project name: $(rdopkg findpkg "$project" | grep "name: " | awk '{print $2}')"
+        echo "Project name: $project"
         resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
         if [ ! -n "$resource_file" ] && [[ "$project" =~ "ui" ]]; then
             project_dshb=${project/ui/dashboard}
@@ -90,6 +96,10 @@ function branching(){
         fi
         if [ ! -n "$resource_file" ] && [[ "$project" =~ "python-django-horizon" ]]; then
             project="openstack-horizon"
+            resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
+        fi
+        if [ ! -n "$resource_file" ] && [[ "$project" =~ "tests-tempest" ]]; then
+            project=$(echo $project | sed "s/python-\(.*\)-tests-tempest/openstack-\1-tempest-plugin/")
             resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
         fi
 
