@@ -99,8 +99,8 @@ function branching(){
             resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
         fi
         if [ ! -n "$resource_file" ] && [[ "$project" =~ "tests-tempest" ]]; then
-            project=$(echo $project | sed "s/python-\(.*\)-tests-tempest/openstack-\1-tempest-plugin/")
-            resource_file=$(find "$RSRC_DIR" -name *"$project.yaml")
+            project=$(echo $project | sed "s/python-\(.*\)-tests-tempest/\1-tempest-plugin/")
+            resource_file=$(find "$RSRC_DIR" -name "openstack-$project.yaml")
         fi
 
         echo "Resource file: $resource_file for project $project"
