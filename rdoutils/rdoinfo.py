@@ -106,7 +106,10 @@ def update_tag(tag_type, project, tag_key, tag_value,
         if tags_info['packages']:
             for pkg in tags_info['packages']:
                 if pkg['project'] == project:
-                    pkg[tag_type][tag] = package[tag_type][tag]
+                    if isinstance(pkg[tag_type][tag], dict):
+                        pkg[tag_type][tag].update(package[tag_type][tag])
+                    else:
+                        pkg[tag_type][tag] = package[tag_type][tag]
                     updated = True
         else:
             tags_info['packages'] = []
