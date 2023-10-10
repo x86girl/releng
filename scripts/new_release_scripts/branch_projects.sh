@@ -9,8 +9,9 @@ RSRC_REPO_NAME="config"
 RSRC_REPO_URL="https://review.rdoproject.org/r/$RSRC_REPO_NAME"
 RSRC_DIR="$WORKDIR/$RSRC_REPO_NAME"
 
-MASTER_RELEASE=$(rdopkg info | grep -e "in development phase" | awk '{print $1}')
-LATEST_RELEASE=$(rdopkg info | grep -e "in maintained phase" | awk '{print $1}' | head -n 1)
+RELEASES=$(rdopkg info)
+MASTER_RELEASE=$(echo -e "$RELEASES" | grep -e "in development phase" | awk '{print $1}')
+LATEST_RELEASE=$(echo -e "$RELEASES" | grep -e "in maintained phase" | awk '{print $1}' | head -n 1)
 
 
 function help(){
