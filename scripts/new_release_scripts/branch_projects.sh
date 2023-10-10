@@ -2,7 +2,10 @@
 set -e
 
 
+REALPATH=$(realpath "$0")
+DIRNAME=$(dirname "$REALPATH")
 WORKDIR=/tmp/"$(basename -s .sh $0)"
+VIRTUAL_ENV=$WORKDIR/.venv
 LOGS="$WORKDIR"/branching_log
 
 RSRC_REPO_NAME="config"
@@ -24,6 +27,7 @@ function help(){
     echo "--libs-clients - to branch clients and libs"
     echo "--cores - to branch cores"
     echo "--tempest - to branch tempest plugins"
+    echo "--deps - to branch the dependencies"
     echo "*file* - to branch own list of projects from specified file
     i.e. `basename $0` /tmp/branching_list"
     echo
@@ -45,6 +49,18 @@ function prepare_rsrc_repo(){
        git rebase origin/master
        popd
     fi
+}
+
+
+function prepare_virtualenv(){
+    if [ ! -d $VIRTUAL_ENV ]; then
+        echo "~~~ Creating a virtual environment... ~~~"
+        virtualenv -p /usr/bin/python3 $VIRTUAL_ENV >/dev/null
+    fi
+    source $VIRTUAL_ENV/bin/activate >/dev/null
+    echo "~~~ Installing the required dependencies... ~~~"
+    python3 -m pip install --upgrade pip >/dev/null
+    pip install -q $DIRNAME/../..
 }
 
 
@@ -72,6 +88,9 @@ function generate_project_list(){
         PROJECT_LIST="$(rdopkg info -t $MASTER_RELEASE-uc conf:tempest tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
         echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
         echo "$PROJECT_LIST" > "$BRANCHED_PROJECTS_FILE"
+    elif [[ "$1" =~ "--deps" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
+        rdopkg info conf:.-*dependency | grep -e "name:" | sort | awk '{print $2}' > $BRANCHED_PROJECTS_FILE
     else
             # anditional projects to branch can be specified in file
             BRANCHED_PROJECTS_FILE="$1"
@@ -80,6 +99,18 @@ function generate_project_list(){
                 exit 1
             fi
     fi
+}
+
+
+function branching_using_python(){
+    echo
+    echo "~~~ Creating branches in projects... ~~~"
+    echo
+
+    pushd "$WORKDIR"
+    python3 -c "from rdoutils import resources_utils as ru ; ru.branch_dependencies_from_file('${BRANCHED_PROJECTS_FILE}', 'c9s-${MASTER_RELEASE}-rdo', 'c9s-${LATEST_RELEASE}-rdo', 'config')"
+    rm -f $BRANCHED_PROJECTS_FILE
+    popd
 }
 
 
@@ -155,5 +186,10 @@ if [ "$#" -ne 1 ]; then
 fi
 
 prepare_rsrc_repo
+prepare_virtualenv
 generate_project_list "$1"
-branching
+if [[ "$1" =~ "--deps" ]]; then
+    branching_using_python "$1"
+else
+    branching
+fi
