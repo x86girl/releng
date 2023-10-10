@@ -61,6 +61,27 @@ def create_new_branch(resource, repo_name, new_branch, start_point,
             return False
 
 
+def get_puppet_module_reponame(puppet_module):
+    return "puppet/{}-distgit".format(puppet_module)
+
+
+def branch_puppet_module(puppet_module, branch_name, local_config):
+    resource_file = {}
+    dedicated_resource_file = ['archive', 'murano', 'placement', 'rsyslog',
+                               'watcher']
+    for _m in dedicated_resource_file:
+        resource_file['puppet-' + _m] = "puppet-puppet-{}".format(_m)
+
+    try:
+        _rf = resource_file[puppet_module]
+    except KeyError:
+        _rf = "puppet-generic"
+
+    repo_name = get_puppet_module_reponame(puppet_module)
+    create_new_branch(_rf, repo_name, branch_name, 'rpm-master', local_config)
+    write_resources(local_config)
+
+
 def update_dep_default_branch(resource, dep_name, branch_name, local_config):
     load_resource(local_config, resource)
     repo_name = get_dep_reponame(dep_name)

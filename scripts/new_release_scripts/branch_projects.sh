@@ -28,6 +28,8 @@ function help(){
     echo "--cores - to branch cores"
     echo "--tempest - to branch tempest plugins"
     echo "--deps - to branch the dependencies"
+    echo "--puppet - to branch the Openstack puppet modules"
+    echo "--non-os-puppet - to branch the non Openstack puppet modules"
     echo "*file* - to branch own list of projects from specified file
     i.e. `basename $0` /tmp/branching_list"
     echo
@@ -91,6 +93,12 @@ function generate_project_list(){
     elif [[ "$1" =~ "--deps" ]]; then
         BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
         rdopkg info conf:.-*dependency | grep -e "name:" | sort | awk '{print $2}' > $BRANCHED_PROJECTS_FILE
+    elif [[ "$1" =~ "--puppet" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
+        rdopkg info conf:rpmfactory-puppet tags:$LATEST_RELEASE upstream:https://opendev.org/ | grep -e "name:" | sort | awk '{print $2}' > $BRANCHED_PROJECTS_FILE
+    elif [[ "$1" =~ "--non-os-puppet" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
+        rdopkg info conf:rpmfactory-puppet tags:$LATEST_RELEASE upstream:~https://opendev.org/ | grep -e "name:" | sort | awk '{print $2}' > $BRANCHED_PROJECTS_FILE
     else
             # anditional projects to branch can be specified in file
             BRANCHED_PROJECTS_FILE="$1"
@@ -108,7 +116,13 @@ function branching_using_python(){
     echo
 
     pushd "$WORKDIR"
-    python3 -c "from rdoutils import resources_utils as ru ; ru.branch_dependencies_from_file('${BRANCHED_PROJECTS_FILE}', 'c9s-${MASTER_RELEASE}-rdo', 'c9s-${LATEST_RELEASE}-rdo', 'config')"
+    if [[ "$1" =~ "--deps" ]]; then
+        python3 -c "from rdoutils import resources_utils as ru ; ru.branch_dependencies_from_file('${BRANCHED_PROJECTS_FILE}', 'c9s-${MASTER_RELEASE}-rdo', 'c9s-${LATEST_RELEASE}-rdo', 'config')"
+    elif [[ "$1" =~ "puppet" ]]; then
+        cat "$BRANCHED_PROJECTS_FILE" | while IFS= read -r project ; do
+            python3 -c "from rdoutils import resources_utils as ru ; ru.branch_puppet_module('${project}', '${LATEST_RELEASE}-rdo', 'config')"
+        done
+    fi
     rm -f $BRANCHED_PROJECTS_FILE
     popd
 }
@@ -188,7 +202,7 @@ fi
 prepare_rsrc_repo
 prepare_virtualenv
 generate_project_list "$1"
-if [[ "$1" =~ "--deps" ]]; then
+if [[ "$1" =~ "--deps" ]] || [[ "$1" =~ "puppet" ]]; then
     branching_using_python "$1"
 else
     branching
