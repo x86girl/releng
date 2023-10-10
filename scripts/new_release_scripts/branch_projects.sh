@@ -37,10 +37,10 @@ function prepare_rsrc_repo(){
     echo "~~~ Cloning resources repo or rebasing... ~~~"
     echo
 
-    if [ ! -d "$WORKDIR"/"$RSRC_REPO_NAME" ]; then
-       git clone "$RSRC_REPO_URL" "$WORKDIR"/"$RSRC_REPO_NAME"
+    if [ ! -d "$RSRC_DIR" ]; then
+       git clone "$RSRC_REPO_URL" "$RSRC_DIR"
     else
-       pushd "$WORKDIR/$RSRC_REPO_NAME"
+       pushd "$RSRC_DIR"
        git checkout master
        git rebase origin/master
        popd
