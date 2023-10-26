@@ -3,15 +3,15 @@
 set -e
 
 # example execution
-#./scripts/pin_non_os_puppet_modules.sh "$GIT_BRANCH" "$UC_BRANCH"
+#./scripts/pin_non_os_puppet_modules.sh "$GIT_BRANCH" "$UC_BRANCH" "$rdoinfo_localisation"
 
 DIRNAME=$(basename $0 | cut -d. -f1)
 WORKDIR="/tmp/$DIRNAME"
 PUPPETFILE="$WORKDIR/Puppetfile"
-RDOINFO_FILE=$(pwd)
 
 GIT_TAG=${1:-stable/2024.1} # master, stable/zed, stable/2023.1...
 UC_BRANCH=${2:-caracal-uc} # caracal-uc, caracal, bobcat, antelope...
+RDOINFO_FILE=${3:-$(pwd)}
 
 if [ ! -d "$WORKDIR" ]; then
     mkdir "$WORKDIR"
