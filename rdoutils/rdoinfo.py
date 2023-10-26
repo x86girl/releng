@@ -1,7 +1,7 @@
 
 import os
 import re
-import ruamel.yaml as yaml
+from ruamel.yaml import YAML
 
 from distroinfo import info
 from distroinfo import query
@@ -101,7 +101,8 @@ def update_tag(tag_type, project, tag_key, tag_value,
         else:
             tags_file = os.path.join(local_dir, tag_type, "%s.yml" % tag)
         with open(tags_file, 'rb') as infile:
-            tags_info = yaml.load(infile, Loader=yaml.RoundTripLoader)
+            yaml = YAML(typ='rt')
+            tags_info = yaml.load(infile)
         # if packages section is empty we can't iterate.
         if tags_info['packages']:
             for pkg in tags_info['packages']:
@@ -122,8 +123,7 @@ def update_tag(tag_type, project, tag_key, tag_value,
             tags_info['packages'].append(newpkg)
         tags_info['packages'].sort(key=lambda i: i['project'])
         with open(tags_file, 'w') as outfile:
-            outfile.write(yaml.dump(tags_info, Dumper=yaml.RoundTripDumper,
-                                    indent=2))
+            yaml.dump(tags_info, stream=outfile)
 
 
 def get_projects_distgit(tag=None, buildsys_tag=None):
