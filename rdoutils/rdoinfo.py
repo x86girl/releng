@@ -140,10 +140,10 @@ def get_projects_distgit(tag=None, buildsys_tag=None):
     return distgits
 
 
-def get_pin(package, release):
+def get_pin(package, release, local_dir=local_info):
     distroinfo = info.DistroInfo(
         info_files='rdo.yml',
-        local_info=local_info)
+        local_info=local_dir)
     inforepo = distroinfo.get_info()
     pkgs = [p for p in inforepo['packages'] if p['name'] == package]
     if not pkgs or len(pkgs) != 1:
