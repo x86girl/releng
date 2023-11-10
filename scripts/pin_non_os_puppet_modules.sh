@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 # example execution
 #./scripts/pin_non_os_puppet_modules.sh "$GIT_BRANCH" "$UC_BRANCH" "$rdoinfo_localisation"
@@ -9,8 +10,8 @@ DIRNAME=$(basename $0 | cut -d. -f1)
 WORKDIR="/tmp/$DIRNAME"
 PUPPETFILE="$WORKDIR/Puppetfile"
 
-GIT_TAG=${1:-stable/2024.1} # master, stable/zed, stable/2023.1...
-UC_BRANCH=${2:-caracal-uc} # caracal-uc, caracal, bobcat, antelope...
+GIT_TAG=${1:-stable/2023.2} # master, stable/zed, stable/2023.1...
+UC_BRANCH=${2:-bobcat} # caracal-uc, caracal, bobcat, antelope...
 RDOINFO_FILE=${3:-$(pwd)}
 
 if [ ! -d "$WORKDIR" ]; then
@@ -37,9 +38,8 @@ while IFS= read -r line; do
         puppetfile_project=$(echo $line | awk '{print $1}')
         puppetfile_version=$(echo $line | awk '{print $3}')
         puppet_repo=$(echo $line | awk '{print $2}')
-        pinned_tag_uc=$(python3 -c "from rdoutils import rdoinfo; print(rdoinfo.get_pin(\"puppet-$puppetfile_project\", \"$UC_BRANCH\"))") || true
-
-         if [[ $pinned_tag_uc == "" ]]; then
+        pinned_tag_uc=$(python3 -c "from rdoutils import rdoinfo; print(rdoinfo.get_pin(\"puppet-$puppetfile_project\", \"$UC_BRANCH\",  local_dir=\"$RDOINFO_FILE\"))") || true
+        if [[ $pinned_tag_uc == "" ]]; then
              echo "Project $puppetfile_project not exists, ignoring."
              echo
              continue
