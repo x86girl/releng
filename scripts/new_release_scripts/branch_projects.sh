@@ -90,6 +90,17 @@ function generate_project_list(){
         PROJECT_LIST="$(rdopkg info -t $MASTER_RELEASE-uc conf:tempest tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
         echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
         echo "$PROJECT_LIST" > "$BRANCHED_PROJECTS_FILE"
+    elif [[ "$1" =~ "--libs-clients" ]]; then
+        BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
+        PROJECT_LIST_LIB="$(rdopkg info -t $MASTER_RELEASE-uc conf:lib tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
+        PROJECT_LIST_CLIENT="$(rdopkg info -t $MASTER_RELEASE-uc conf:client tags:$MASTER_RELEASE-uc | grep "name: " | sort | sed 's/name: //g')"
+        echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
+        echo "$PROJECT_LIST_LIB" > "$BRANCHED_PROJECTS_FILE"
+        echo "$PROJECT_LIST_CLIENT" >> "$BRANCHED_PROJECTS_FILE"
+        sed -i 's/glance-store/glance_store/' "$BRANCHED_PROJECTS_FILE"
+        sed -i 's/kuryr-lib/kuryr/' "$BRANCHED_PROJECTS_FILE"
+        sed -i 's/rally-plugins/rally-openstack/' "$BRANCHED_PROJECTS_FILE"
+        sed -i 's/python-//' "$BRANCHED_PROJECTS_FILE"
     elif [[ "$1" =~ "--deps" ]]; then
         BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
         rdopkg info conf:.-*dependency | grep -e "name:" | sort | awk '{print $2}' > $BRANCHED_PROJECTS_FILE
