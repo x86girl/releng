@@ -21,6 +21,7 @@ if [ ! -d $WORKDIR ]; then
 mkdir $WORKDIR
 fi
 
+pushd $WORKDIR/ >/dev/null
 if [ ! -d $WORKDIR/rdoinfo ]; then
     git clone $RDOINFO_GIT_URL
 fi
@@ -42,4 +43,5 @@ while IFS= read -r project; do
         echo
 done <<< "$TEMPEST_PROJECTS"
 
-popd
+popd >/dev/null
+popd >/dev/null
