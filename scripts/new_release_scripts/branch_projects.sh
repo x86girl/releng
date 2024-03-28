@@ -74,9 +74,6 @@ function generate_project_list(){
         echo "~~~ List of brached projects placed in $BRANCHED_PROJECTS_FILE ~~~"
         echo "$PROJECT_LIST" > "$BRANCHED_PROJECTS_FILE"
 
-        # remove projects which are branched in 1st phase
-        sed -i 's/diskimage-builder//' "$BRANCHED_PROJECTS_FILE"
-        sed -i 's/dib-utils//' "$BRANCHED_PROJECTS_FILE"
         sed -i '/^$/d' "$BRANCHED_PROJECTS_FILE"
 
         # adjust project names
@@ -99,7 +96,6 @@ function generate_project_list(){
         echo "$PROJECT_LIST_CLIENT" >> "$BRANCHED_PROJECTS_FILE"
         sed -i 's/glance-store/glance_store/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/kuryr-lib/kuryr/' "$BRANCHED_PROJECTS_FILE"
-        sed -i 's/rally-plugins/rally-openstack/' "$BRANCHED_PROJECTS_FILE"
         sed -i 's/python-//' "$BRANCHED_PROJECTS_FILE"
     elif [[ "$1" =~ "--deps" ]]; then
         BRANCHED_PROJECTS_FILE="$WORKDIR"/"$(echo $1 | tr -d '-')"_branching_list
@@ -158,6 +154,9 @@ function branching(){
         if [ ! -n "$resource_file" ] && [[ "$project" =~ "tests-tempest" ]]; then
             project=$(echo $project | sed "s/python-\(.*\)-tests-tempest/\1-tempest-plugin/")
             resource_file=$(find "$RSRC_DIR" -name "openstack-$project.yaml")
+        fi
+        if [ ! -n "$resource_file" ] && [[ "$project" = "openstack-rally-plugins" ]]; then
+            resource_file=$(find "$RSRC_DIR" -name "openstack-rally-openstack.yaml")
         fi
 
         echo "Resource file: $resource_file for project $project"
