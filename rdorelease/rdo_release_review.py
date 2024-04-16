@@ -197,12 +197,12 @@ def new_version(package, version, release, dry_run=True,
         cmd = cmd + ['-u', chglog_user]
     if chglog_email:
         cmd = cmd + ['-e', chglog_email]
-    new_vers = rdopkg(*cmd)
+    new_vers = rdopkg(*cmd, _err_to_out=True)
     if update_pubkey_fingerprint(package):
         git('commit', '-a', '--amend', '--no-edit')
     if not dry_run:
         git('review', '-t', '%s-update' % release)
-    return new_vers
+    return str(new_vers)
 
 
 def new_vers_stderr(msg):
@@ -265,8 +265,8 @@ def process_package(name, version, osp_release, dry_run, check_tag=False,
         new_vers = new_version(name, version, osp_release, dry_run=True,
                                chglog_user=chglog_user,
                                chglog_email=chglog_email)
-        if new_vers_stderr(new_vers.stderr.decode('utf-8')):
-            log_message('INFO', new_vers_stderr(new_vers.stderr).group(1),
+        if new_vers_stderr(new_vers):
+            log_message('INFO', new_vers_stderr(new_vers).group(1),
                         logfile)
         new_evr = get_evr(name)
         if not is_newer(new_evr, old_evr):

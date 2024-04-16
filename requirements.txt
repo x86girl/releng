@@ -1,6 +1,7 @@
 distroinfo
 pygerrit2 == 2.0.9
-sh >= 1.12.9
+sh >= 2.0.0;python_version>="3.9"
+sh >= 1.12.9;python_version<"3.9"
 pbr
 python_jenkins
 rdopkg >= 0.46.0
