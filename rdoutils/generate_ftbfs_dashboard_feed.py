@@ -125,10 +125,9 @@ def main():
     args = parse_args()
 
     if args.release is None:
-        releases = ["centos8-wallaby", "centos8-xena", "centos8-yoga",
-                    "centos9-wallaby", "centos9-xena", "centos9-yoga",
-                    "centos9-zed", "centos9-antelope", "centos9-bobcat",
-                    "centos9-caracal", "centos9-master", "centos9-master-head"]
+        releases = ["centos9-yoga", "centos9-zed", "centos9-antelope",
+                    "centos9-bobcat", "centos9-caracal", "centos9-master",
+                    "centos9-master-head"]
     else:
         releases = args.release
 
