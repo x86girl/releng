@@ -158,6 +158,9 @@ function branching(){
         if [ ! -n "$resource_file" ] && [[ "$project" = "openstack-rally-plugins" ]]; then
             resource_file=$(find "$RSRC_DIR" -name "openstack-rally-openstack.yaml")
         fi
+        if [ ! -n "$resource_file" ] && [[ "$project" = "golang-github-openstack-k8s-operators-os-diff" ]]; then
+            resource_file=$(find "$RSRC_DIR" -name "openstack-os-diff.yaml")
+        fi
 
         echo "Resource file: $resource_file for project $project"
         if [ -n "$resource_file" ]; then
