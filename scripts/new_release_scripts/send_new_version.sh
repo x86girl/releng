@@ -53,18 +53,14 @@ fi
 echo -e "Latest version detected:\t $TAG"
 
 if [ $TAG == $LAST_VERSION ]; then
-    echo "No new version detected, a cross-tag is required"
-    echo "cbs add-pkg cloud9s-openstack-$MASTER_RELEASE-candidate $PKG --owner=rdobuilder"
-    echo "cbs tag-build cloud9s-openstack-$MASTER_RELEASE-candidate $LAST_NVR"
-    echo "Press 2 key to run the 2 commands above:"
-    read -n 2
-    cbs add-pkg cloud9s-openstack-$MASTER_RELEASE-candidate $PKG --owner=rdobuilder
-    cbs tag-build cloud9s-openstack-$MASTER_RELEASE-candidate $LAST_NVR
-    exit 0
+    echo "No new version detected, a cross-tag is required. Cherry-picking from last release..."
+    git checkout ${MASTER_RELEASE}-rdo
+    git cherry-pick -x origin/${LATEST_RELEASE}-rdo
+    git show
+else
+    rdopkg new-version -U -b $TAG -u RDO -e dev@lists.rdoproject.org -t -d
+    bash $DIRNAME/edit_source_gpg_sign && git commit -a --amend --no-edit
 fi
-
-rdopkg new-version -U -b $TAG -u RDO -e dev@lists.rdoproject.org -t -d
-bash $DIRNAME/edit_source_gpg_sign && git commit -a --amend --no-edit
 
 echo "Press 2 key to submit review to Gerrit:"
 read -n 2
