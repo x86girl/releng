@@ -126,8 +126,8 @@ def main():
 
     if args.release is None:
         releases = ["centos9-yoga", "centos9-zed", "centos9-antelope",
-                    "centos9-bobcat", "centos9-caracal", "centos9-master",
-                    "centos9-master-head"]
+                    "centos9-bobcat", "centos9-caracal", "centos9-dalmatian",
+                    "centos9-master", "centos9-master-head"]
     else:
         releases = args.release
 
