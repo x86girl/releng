@@ -1,8 +1,8 @@
 # releases
-PENULTIMATE_RELEASE=bobcat
-LATEST_RELEASE=caracal
-MASTER_RELEASE=dalmatian
-NEXT_RELEASE=epoxy
+PENULTIMATE_RELEASE=caracal
+LATEST_RELEASE=dalmatian
+MASTER_RELEASE=epoxy
+NEXT_RELEASE=flamingo
 
 # repo urls
 RDOINFO_GIT_URL="https://github.com/redhat-openstack/rdoinfo.git"
