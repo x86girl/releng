@@ -1,7 +1,13 @@
 #!/bin/bash
 
-# This script check the version of a package in a version of Fedora and compares it with latest
-# version in CBS for a rdo release.
+# This script check the version of a package in a version of Fedora and 
+# compares it with latest  version in CBS for a rdo release.
+
+if [[ $# -ne 4 ]]; then
+        echo "Usage: $0 <PKG> <FEDORA_RELEASE> <RDO_RELEASE>"
+        echo "E.g.: $0 python-sushy 42 caracal"
+        exit 1
+fi
 
 PKG=$1
 
